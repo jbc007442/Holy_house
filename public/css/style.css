@@ -1,0 +1,13 @@
+/* didebar  */
+.sidebar-link{
+    display:block;
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:13px;
+    color:#52525b;
+    transition:.2s;
+}
+.sidebar-link:hover{
+    background:#f4f4f5;
+    color:#18181b;
+}
