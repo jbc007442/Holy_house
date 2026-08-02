@@ -260,7 +260,7 @@
 
             ajaxUrl: "{{ route('dashboard.bookings.current-stays.ajax') }}",
 
-            viewUrl: "{{ route('dashboard.bookings.show', ':id') }}",
+            // viewUrl: "{{ route('dashboard.bookings.show', ':id') }}",
 
             editUrl: "{{ route('dashboard.bookings.edit', ':id') }}",
 

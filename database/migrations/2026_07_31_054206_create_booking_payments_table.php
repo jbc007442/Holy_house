@@ -49,6 +49,17 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
+            // Audit
+            $table->foreignId('created_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->foreignId('updated_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
             // Payment Date
             $table->timestamp('paid_at')->useCurrent();
 

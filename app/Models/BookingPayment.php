@@ -16,6 +16,8 @@ class BookingPayment extends Model
         'remarks',
         'received_by',
         'paid_at',
+        'created_by',
+        'updated_by',
     ];
 
 
@@ -41,6 +43,28 @@ class BookingPayment extends Model
     {
         return $this->belongsTo(User::class, 'received_by');
     }
+    /**
+     * Audit 
+     */
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
+    }
 
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    
+    /**
+     * Audit 
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    } 
     
 }

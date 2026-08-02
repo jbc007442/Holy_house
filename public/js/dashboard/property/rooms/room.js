@@ -1,21 +1,32 @@
+let currentPage = 1;
+
 $(function () {
     loadRooms();
 
     $("#searchRoom").on("keyup", function () {
-        loadRooms();
+        loadRooms(1);
     });
 
     $("#buildingFilter,#statusFilter").on("change", function () {
-        loadRooms();
+        loadRooms(1);
     });
 
-    function loadRooms() {
+    $(document).on("click", ".pagination-btn", function () {
+        if ($(this).prop("disabled")) return;
+
+        loadRooms($(this).data("page"));
+    });
+
+    function loadRooms(page = 1) {
+        currentPage = page;
         $.ajax({
             url: roomConfig.indexUrl,
 
             type: "GET",
 
             data: {
+                page: page,
+
                 search: $("#searchRoom").val(),
 
                 building: $("#buildingFilter").val(),
@@ -137,6 +148,43 @@ $(function () {
                 }
 
                 $("#roomTableBody").html(html);
+                const current = response.pagination.current_page;
+                const last = response.pagination.last_page;
+
+                let pagination = `
+<div class="flex items-center justify-between">
+
+    <div class="text-sm text-zinc-500">
+        Showing ${response.pagination.from} to ${response.pagination.to}
+        of ${response.pagination.total} entries
+    </div>
+
+    <div class="flex items-center gap-3">
+
+        <button
+            class="pagination-btn px-4 py-2 border rounded-lg hover:bg-zinc-100"
+            data-page="${current - 1}"
+            ${current === 1 ? "disabled" : ""}>
+            Previous
+        </button>
+
+        <span class="text-sm font-medium">
+            Page ${current} of ${last}
+        </span>
+
+        <button
+            class="pagination-btn px-4 py-2 border rounded-lg hover:bg-zinc-100"
+            data-page="${current + 1}"
+            ${current === last ? "disabled" : ""}>
+            Next
+        </button>
+
+    </div>
+
+</div>
+`;
+
+                $("#paginationWrapper").html(pagination);
             },
         });
     }
@@ -166,7 +214,7 @@ $(function () {
             success(response) {
                 window.notyf.success(response.message);
 
-                loadRooms();
+                loadRooms(currentPage);
             },
 
             error(xhr) {

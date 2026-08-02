@@ -16,6 +16,8 @@ class Room extends Model
         'base_price',
         'status',
         'description',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -32,5 +34,22 @@ class Room extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Audit 
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

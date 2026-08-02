@@ -36,16 +36,35 @@ class StockMovementController extends Controller
             $query->whereDate('created_at', $request->date);
         }
 
-        $movements = $query->latest()->get();
+        $movements = $query
+            ->latest()
+            ->paginate(10);
 
         if ($request->ajax()) {
+
+            $statsQuery = clone $query;
+
             return response()->json([
                 'stats' => [
-                    'total' => StockMovement::count(),
-                    'stockOut' => StockMovement::where('type', 'out')->count(),
-                    'adjustment' => StockMovement::where('type', 'adjustment')->count(),
+                    'total' => (clone $statsQuery)->count(),
+                    'stockOut' => (clone $statsQuery)
+                        ->where('type', 'out')
+                        ->count(),
+                    'adjustment' => (clone $statsQuery)
+                        ->where('type', 'adjustment')
+                        ->count(),
                 ],
-                'data' => $movements,
+
+                'data' => $movements->items(),
+
+                'pagination' => [
+                    'current_page' => $movements->currentPage(),
+                    'last_page' => $movements->lastPage(),
+                    'per_page' => $movements->perPage(),
+                    'total' => $movements->total(),
+                    'from' => $movements->firstItem(),
+                    'to' => $movements->lastItem(),
+                ]
             ]);
         }
 
@@ -87,6 +106,7 @@ class StockMovementController extends Controller
         $item = Item::findOrFail($validated['item_id']);
 
         if (! $item->hasStock($validated['quantity'])) {
+
             return back()
                 ->withInput()
                 ->withErrors([
@@ -98,7 +118,18 @@ class StockMovementController extends Controller
 
             $item->decreaseStock($validated['quantity']);
 
-            StockMovement::create($validated);
+            // Update audit on Item
+            $item->update([
+                'updated_by' => auth()->id(),
+            ]);
+
+            // Create Stock Movement
+            StockMovement::create([
+                ...$validated,
+
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+            ]);
         });
 
         return redirect()
@@ -151,12 +182,18 @@ class StockMovementController extends Controller
 
             // Restore previous stock
             $oldItem = $stockMovement->item;
+
             $oldItem->increaseStock($stockMovement->quantity);
+
+            $oldItem->update([
+                'updated_by' => auth()->id(),
+            ]);
 
             // Apply new movement
             $newItem = Item::findOrFail($validated['item_id']);
 
             if (! $newItem->hasStock($validated['quantity'])) {
+
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'quantity' => "Only {$newItem->opening_stock} item(s) available."
                 ]);
@@ -164,7 +201,15 @@ class StockMovementController extends Controller
 
             $newItem->decreaseStock($validated['quantity']);
 
-            $stockMovement->update($validated);
+            $newItem->update([
+                'updated_by' => auth()->id(),
+            ]);
+
+            // Update movement
+            $stockMovement->update([
+                ...$validated,
+                'updated_by' => auth()->id(),
+            ]);
         });
 
         return redirect()
@@ -220,7 +265,15 @@ class StockMovementController extends Controller
 
             return response()->json([
                 'data' => $items->items(),
-                'pagination' => (string) $items->withQueryString()->links(),
+
+                'pagination' => [
+                    'current_page' => $items->currentPage(),
+                    'last_page'    => $items->lastPage(),
+                    'per_page'     => $items->perPage(),
+                    'total'        => $items->total(),
+                    'from'         => $items->firstItem(),
+                    'to'           => $items->lastItem(),
+                ],
             ]);
         }
 

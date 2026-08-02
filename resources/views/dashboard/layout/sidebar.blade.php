@@ -249,13 +249,13 @@
                 </a>
 
                 <!-- Login History -->
-                <a href="{{ route('dashboard.login-history.index') }}"
+                {{-- <a href="{{ route('dashboard.login-history.index') }}"
                     class="sidebar-link {{ request()->routeIs('dashboard.login-history.*') ? 'text-amber-600 font-semibold' : '' }}">
 
                     <i class="fa-solid fa-clock-rotate-left w-4 mr-2"></i>
                     Login History
 
-                </a>
+                </a> --}}
 
             </div>
 

@@ -31,8 +31,11 @@
     <!-- Toast CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
-      <!-- Country Dropdown -->
+    <!-- Country Dropdown -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/country-select-js@2.1.0/build/css/countrySelect.min.css">
+
+    <!--data table-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.min.css">
 
     <style>
         body {
@@ -93,6 +96,7 @@
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/country-select-js@2.1.0/build/js/countrySelect.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
 
     <script>
         window.notyf = new Notyf({
@@ -186,6 +190,52 @@
                 } else {
 
                     sidebar.classList.add("-translate-x-full");
+
+                }
+
+            });
+
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+
+            $('#myTable').DataTable({
+
+                responsive: true,
+
+                pageLength: 10,
+
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
+
+                ordering: true,
+
+                searching: true,
+
+                info: true,
+
+                autoWidth: false,
+
+                language: {
+
+                    search: "Search:",
+
+                    lengthMenu: "Show _MENU_ entries",
+
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+
+                    zeroRecords: "No records found",
+
+                    paginate: {
+
+                        previous: "Previous",
+
+                        next: "Next"
+
+                    }
 
                 }
 

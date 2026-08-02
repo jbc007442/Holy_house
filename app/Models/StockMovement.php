@@ -13,6 +13,8 @@ class StockMovement extends Model
         'quantity',
         'reference',
         'remarks',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -21,5 +23,21 @@ class StockMovement extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
+    }
+
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Audit 
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

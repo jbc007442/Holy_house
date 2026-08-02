@@ -50,9 +50,7 @@ function loadInvoices(page = 1) {
 
             renderTable(response.invoices);
 
-            $("#pagination").html(response.pagination.links);
-
-            bindPagination();
+            renderPagination(response.pagination);
         },
 
         error: function (xhr) {
@@ -96,6 +94,12 @@ function renderTable(invoices) {
 
         return;
     }
+
+    $(document).on("click", ".page-btn", function () {
+        if ($(this).prop("disabled")) return;
+
+        loadInvoices($(this).data("page"));
+    });
 
     invoices.forEach(function (invoice) {
         const booking = invoice.booking ?? {};
@@ -176,22 +180,6 @@ function renderTable(invoices) {
     $("#invoiceTable").html(html);
 }
 
-function bindPagination() {
-    $("#pagination")
-        .find("a")
-        .click(function (e) {
-            e.preventDefault();
-
-            const href = $(this).attr("href");
-
-            if (!href) return;
-
-            const page = new URL(href).searchParams.get("page");
-
-            loadInvoices(page);
-        });
-}
-
 function formatDate(date) {
     if (!date) return "-";
 
@@ -202,6 +190,57 @@ function formatDate(date) {
 
         year: "numeric",
     });
+}
+
+function renderPagination(pagination) {
+    if (!pagination) return;
+
+    const current = pagination.current_page;
+    const last = pagination.last_page;
+
+    $("#pagination").html(`
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+
+            <div class="text-sm text-zinc-500">
+                Showing ${pagination.from ?? 0}
+                to ${pagination.to ?? 0}
+                of ${pagination.total} entries
+            </div>
+
+            <div class="flex items-center gap-3">
+
+                <button
+                    class="page-btn px-4 py-2 rounded-lg border hover:bg-zinc-100 disabled:opacity-50"
+                    data-page="${current - 1}"
+                    ${current === 1 ? "disabled" : ""}>
+
+                    <i class="fa-solid fa-chevron-left mr-1"></i>
+
+                    Previous
+
+                </button>
+
+                <span class="text-sm font-medium text-zinc-600">
+
+                    Page ${current} of ${last}
+
+                </span>
+
+                <button
+                    class="page-btn px-4 py-2 rounded-lg border hover:bg-zinc-100 disabled:opacity-50"
+                    data-page="${current + 1}"
+                    ${current === last ? "disabled" : ""}>
+
+                    Next
+
+                    <i class="fa-solid fa-chevron-right ml-1"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+    `);
 }
 
 function debounce(fn, delay) {

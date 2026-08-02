@@ -34,12 +34,11 @@ class ItemController extends Controller
 
         $items = $query
             ->latest()
-            ->get();
+            ->paginate(10);
 
         $statsQuery = clone $query;
 
         if ($request->ajax()) {
-
             return response()->json([
                 'stats' => [
                     'totalItems' => (clone $statsQuery)->count(),
@@ -49,7 +48,17 @@ class ItemController extends Controller
                         ->whereColumn('opening_stock', '<=', 'minimum_stock')
                         ->count(),
                 ],
-                'data' => $items,
+
+                'data' => $items->items(),
+
+                'pagination' => [
+                    'current_page' => $items->currentPage(),
+                    'last_page' => $items->lastPage(),
+                    'per_page' => $items->perPage(),
+                    'total' => $items->total(),
+                    'from' => $items->firstItem(),
+                    'to' => $items->lastItem(),
+                ],
             ]);
         }
 
@@ -88,7 +97,11 @@ class ItemController extends Controller
             'remarks'        => ['nullable', 'string'],
         ]);
 
-        Item::create($validated);
+        Item::create([
+            ...$validated,
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
+        ]);
 
         return redirect()
             ->route('dashboard.inventory.items')
@@ -126,6 +139,8 @@ class ItemController extends Controller
             'status'         => ['required', 'boolean'],
             'remarks'        => ['nullable', 'string'],
         ]);
+
+        $validated['updated_by'] = auth()->id();
 
         $item->update($validated);
 

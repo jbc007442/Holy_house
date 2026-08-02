@@ -4,286 +4,217 @@
 
 @section('content')
 
-<div class="space-y-6">
+    <div class="space-y-6">
 
-    <!-- Header -->
+        <!-- Header -->
 
-    <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
 
-        <div>
+            <div>
 
-            <h1 class="text-3xl font-bold text-zinc-800">
-                Dashboard
-            </h1>
+                <h1 class="text-3xl font-bold text-zinc-800">
+                    Dashboard
+                </h1>
 
-            <p class="text-zinc-500 mt-1">
-                Welcome back! Here's an overview of your hotel.
-            </p>
+                <p class="text-zinc-500 mt-1">
+                    Welcome back! Here's an overview of your hotel.
+                </p>
 
-        </div>
+            </div>
 
-        <div class="text-sm text-zinc-500">
-            {{ now()->format('d M Y') }}
-        </div>
-
-    </div>
-
-    <!-- Statistics -->
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5">
-
-        <div class="bg-white rounded-2xl border p-6">
-
-            <p class="text-zinc-500 text-sm">Buildings</p>
-
-            <h2 id="totalBuildings"
-                class="text-4xl font-bold mt-2">
-
-                0
-
-            </h2>
+            <div class="text-sm text-zinc-500">
+                {{ now()->format('d M Y') }}
+            </div>
 
         </div>
 
-        <div class="bg-white rounded-2xl border p-6">
+        <!-- Statistics -->
 
-            <p class="text-zinc-500 text-sm">Rooms</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-            <h2 id="totalRooms"
-                class="text-4xl font-bold mt-2">
+            <!-- Buildings -->
 
-                0
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
 
-            </h2>
+                <div class="flex items-center justify-between">
 
-        </div>
+                    <div>
 
-        <div class="bg-white rounded-2xl border p-6">
+                        <p class="text-sm text-zinc-500">
+                            Buildings
+                        </p>
 
-            <p class="text-zinc-500 text-sm">Bookings</p>
+                        <h2 id="totalBuildings" class="mt-2 text-3xl font-bold text-zinc-900">
+                            0
+                        </h2>
 
-            <h2 id="totalBookings"
-                class="text-4xl font-bold mt-2 text-blue-600">
+                    </div>
 
-                0
+                    <div class="h-14 w-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <i class="fa-solid fa-building text-2xl"></i>
+                    </div>
 
-            </h2>
+                </div>
 
-        </div>
+            </div>
 
-        <div class="bg-white rounded-2xl border p-6">
+            <!-- Rooms -->
 
-            <p class="text-zinc-500 text-sm">Inventory Items</p>
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
 
-            <h2 id="totalItems"
-                class="text-4xl font-bold mt-2 text-emerald-600">
+                <div class="flex items-center justify-between">
 
-                0
+                    <div>
 
-            </h2>
+                        <p class="text-sm text-zinc-500">
+                            Rooms
+                        </p>
 
-        </div>
+                        <h2 id="totalRooms" class="mt-2 text-3xl font-bold text-zinc-900">
+                            0
+                        </h2>
 
-        <div class="bg-white rounded-2xl border p-6">
+                    </div>
 
-            <p class="text-zinc-500 text-sm">Current Stock</p>
+                    <div class="h-14 w-14 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center">
+                        <i class="fa-solid fa-bed text-2xl"></i>
+                    </div>
 
-            <h2 id="currentStock"
-                class="text-4xl font-bold mt-2 text-orange-600">
+                </div>
 
-                0
+            </div>
 
-            </h2>
+            <!-- Bookings -->
 
-        </div>
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
 
-    </div>
+                <div class="flex items-center justify-between">
 
-    <!-- Second Row -->
+                    <div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <p class="text-sm text-zinc-500">
+                            Current Guests
+                        </p>
 
-        <div class="bg-white rounded-2xl border p-6">
+                        <h2 id="totalBookings" class="mt-2 text-3xl font-bold text-zinc-900">
+                            0
+                        </h2>
 
-            <p class="text-zinc-500 text-sm">
-                Purchase Amount
-            </p>
+                    </div>
 
-            <h2 id="purchaseAmount"
-                class="text-3xl font-bold mt-2">
+                    <div class="h-14 w-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <i class="fa-solid fa-user-check text-2xl"></i>
+                    </div>
 
-                ₹0.00
+                </div>
 
-            </h2>
+            </div>
 
-        </div>
+            <!-- Users -->
 
-        <div class="bg-white rounded-2xl border p-6">
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
 
-            <p class="text-zinc-500 text-sm">
-                Users
-            </p>
+                <div class="flex items-center justify-between">
 
-            <h2 id="totalUsers"
-                class="text-3xl font-bold mt-2">
+                    <div>
 
-                0
+                        <p class="text-sm text-zinc-500">
+                            Users
+                        </p>
 
-            </h2>
+                        <h2 id="totalUsers" class="mt-2 text-3xl font-bold text-zinc-900">
+                            0
+                        </h2>
 
-        </div>
+                    </div>
 
-        <div class="bg-white rounded-2xl border p-6">
+                    <div class="h-14 w-14 rounded-2xl bg-cyan-100 text-cyan-600 flex items-center justify-center">
+                        <i class="fa-solid fa-users text-2xl"></i>
+                    </div>
 
-            <p class="text-zinc-500 text-sm">
-                Stock Movements
-            </p>
+                </div>
 
-            <h2 id="stockMovements"
-                class="text-3xl font-bold mt-2">
-
-                0
-
-            </h2>
-
-        </div>
-
-    </div>
-
-    <!-- Charts -->
-
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <div class="bg-white rounded-2xl border p-6">
-
-            <h2 class="text-lg font-semibold mb-5">
-                Booking Overview
-            </h2>
-
-            <canvas id="bookingChart" height="120"></canvas>
+            </div>
 
         </div>
+        <!-- Login History  -->
+        <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
 
-        <div class="bg-white rounded-2xl border p-6">
+            <div class="px-6 py-4 border-b border-zinc-200">
 
-            <h2 class="text-lg font-semibold mb-5">
-                Inventory Overview
-            </h2>
-
-            <canvas id="inventoryChart" height="120"></canvas>
-
-        </div>
-
-    </div>
-
-    <!-- Tables -->
-
-    <div class="grid lg:grid-cols-2 gap-6">
-
-        <div class="bg-white rounded-2xl border overflow-hidden">
-
-            <div class="px-6 py-4 border-b">
-
-                <h2 class="font-semibold">
-
-                    Recent Bookings
-
+                <h2 class="text-lg font-semibold text-zinc-800">
+                    Recent Login History
                 </h2>
 
             </div>
 
-            <table class="w-full">
+            <div class="overflow-x-auto">
 
-                <thead class="bg-zinc-50">
+                <table class="w-full text-sm">
 
-                    <tr>
+                    <thead class="bg-zinc-50">
 
-                        <th class="px-5 py-3 text-left">
-                            Booking
-                        </th>
+                        <tr>
 
-                        <th class="px-5 py-3 text-left">
-                            Customer
-                        </th>
+                            <th class="px-6 py-4 text-left">
+                                User
+                            </th>
 
-                        <th class="px-5 py-3 text-center">
-                            Status
-                        </th>
+                            <th class="px-6 py-4 text-left">
+                                Login Time
+                            </th>
 
-                    </tr>
+                            <th class="px-6 py-4 text-left">
+                                Logout Time
+                            </th>
 
-                </thead>
+                            <th class="px-6 py-4 text-center">
+                                Status
+                            </th>
 
-                <tbody id="recentBookings">
+                        </tr>
 
-                </tbody>
+                    </thead>
 
-            </table>
+                    <tbody id="loginHistoryTable">
 
-        </div>
+                        <tr>
 
-        <div class="bg-white rounded-2xl border overflow-hidden">
+                            <td colspan="7" class="px-6 py-8 text-center text-zinc-500">
 
-            <div class="px-6 py-4 border-b">
+                                Loading...
 
-                <h2 class="font-semibold">
+                            </td>
 
-                    Low Stock Items
+                        </tr>
 
-                </h2>
+                    </tbody>
+
+                </table>
+
+                <div id="paginationWrapper" class="border-t border-zinc-200 px-6 py-4">
+                </div>
 
             </div>
 
-            <table class="w-full">
-
-                <thead class="bg-zinc-50">
-
-                    <tr>
-
-                        <th class="px-5 py-3 text-left">
-
-                            Item
-
-                        </th>
-
-                        <th class="px-5 py-3 text-center">
-
-                            Stock
-
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="lowStockTable">
-
-                </tbody>
-
-            </table>
-
         </div>
 
-    </div>
 
-</div>
+
+    </div>
 
 @endsection
 
 @push('scripts')
+    <script>
+        window.dashboard = {
 
-<script>
+            ajaxUrl: "{{ route('dashboard.data') }}"
 
-window.dashboard = {
+        };
+    </script>
 
-    ajaxUrl: "{{ route('dashboard.data') }}"
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-};
-
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script src="{{ asset('js/dashboard/dashboard.js') }}"></script>
-
+    <script src="{{ asset('js/dashboard/dashboard.js') }}"></script>
 @endpush

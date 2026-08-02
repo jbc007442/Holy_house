@@ -153,7 +153,17 @@ class InvoiceController extends Controller
 
             'pagination' => [
 
-                'links' => $invoices->toHtml(),
+                'current_page' => $invoices->currentPage(),
+
+                'last_page' => $invoices->lastPage(),
+
+                'per_page' => $invoices->perPage(),
+
+                'total' => $invoices->total(),
+
+                'from' => $invoices->firstItem(),
+
+                'to' => $invoices->lastItem(),
 
             ],
 

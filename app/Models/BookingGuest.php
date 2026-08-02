@@ -15,6 +15,8 @@ class BookingGuest extends Model
         'id_number',
         'nationality',
         'is_primary',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -23,5 +25,21 @@ class BookingGuest extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
+    }
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Audit 
+     */
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

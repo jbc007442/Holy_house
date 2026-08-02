@@ -135,10 +135,10 @@ function renderTable(bookings) {
 
         let building = room.building ?? {};
 
-        let viewUrl = window.currentStayConfig.viewUrl.replace(
-            ":id",
-            booking.id,
-        );
+        // let viewUrl = window.currentStayConfig.viewUrl.replace(
+        //     ":id",
+        //     booking.id,
+        // );
 
         let editUrl = window.currentStayConfig.editUrl.replace(
             ":id",
@@ -213,13 +213,6 @@ Checked In
 <td class="px-5 py-4">
 
 <div class="flex justify-end items-center gap-2">
-
-<a href="${viewUrl}"
-class="w-9 h-9 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 flex items-center justify-center">
-
-<i class="fa-solid fa-eye"></i>
-
-</a>
 
 <a href="${editUrl}"
 class="w-9 h-9 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-100 flex items-center justify-center">

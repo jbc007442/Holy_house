@@ -50,10 +50,14 @@ class PurchaseHistoryController extends Controller
                 'total_amount'  => $validated['total_amount'],
                 'purchase_date' => $validated['purchase_date'],
                 'remarks'       => $validated['remarks'] ?? null,
+
+                'created_by'    => auth()->id(),
+                'updated_by'    => auth()->id(),
             ]);
 
             $item->update([
                 'opening_stock' => $item->opening_stock + $validated['quantity'],
+                'updated_by'    => auth()->id(),
             ]);
         });
 

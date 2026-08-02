@@ -16,6 +16,8 @@ class Item extends Model
         'minimum_stock',
         'status',
         'remarks',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -82,4 +84,21 @@ class Item extends Model
     {
         return $this->hasMany(PurchaseHistory::class);
     }
+
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Audit 
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
 }

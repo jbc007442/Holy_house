@@ -16,6 +16,8 @@ class BookingService extends Model
         'unit_price',
         'total_amount',
         'remarks',
+        'created_by',
+        'updated_by',
     ];
 
 
@@ -37,5 +39,21 @@ class BookingService extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
+    }
+
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Audit 
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

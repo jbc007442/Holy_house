@@ -23,6 +23,8 @@ class Booking extends Model
         'payment_status',
         'status',
         'remarks',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -66,5 +68,18 @@ class Booking extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(BookingPayment::class);
+    }
+
+    /**
+     *  Audit
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

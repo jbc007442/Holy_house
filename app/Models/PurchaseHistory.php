@@ -13,6 +13,8 @@ class PurchaseHistory extends Model
         'total_amount',
         'purchase_date',
         'remarks',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -39,5 +41,20 @@ class PurchaseHistory extends Model
         }
 
         return round($this->total_amount / $this->quantity, 2);
+    }
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Audit 
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

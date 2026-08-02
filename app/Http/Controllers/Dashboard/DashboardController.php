@@ -12,6 +12,8 @@ use App\Models\BookingService;
 use App\Models\Item;
 use App\Models\PurchaseHistory;
 use App\Models\StockMovement;
+use App\Models\LoginHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -41,8 +43,12 @@ class DashboardController extends Controller
     /**
      * Dashboard Data (AJAX)
      */
-    public function data()
+    public function data(Request $request)
     {
+        $loginHistory = LoginHistory::with('user')
+            ->latest('login_at')
+            ->paginate(10);
+
         return response()->json([
 
             'stats' => [
@@ -51,21 +57,23 @@ class DashboardController extends Controller
 
                 'rooms' => Room::count(),
 
-                'bookings' => Booking::count(),
-
-                'guests' => BookingGuest::count(),
-
-                'services' => BookingService::count(),
+                'bookings' => Booking::where('status', 'checked_in')->count(),
 
                 'users' => User::count(),
 
-                'items' => Item::count(),
+            ],
 
-                'currentStock' => Item::sum('opening_stock'),
+            'loginHistory' => $loginHistory->items(),
 
-                'purchaseAmount' => PurchaseHistory::sum('total_amount'),
+            'pagination' => [
 
-                'stockMovements' => StockMovement::count(),
+                'current_page' => $loginHistory->currentPage(),
+
+                'last_page' => $loginHistory->lastPage(),
+
+                'per_page' => $loginHistory->perPage(),
+
+                'total' => $loginHistory->total(),
 
             ],
 

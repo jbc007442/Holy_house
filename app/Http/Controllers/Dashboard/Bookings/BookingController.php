@@ -91,6 +91,9 @@ class BookingController extends Controller
                 'status'               => $request->status ?? 'checked_in',
 
                 'remarks'              => $request->remarks,
+
+                'created_by'           => auth()->id(),
+                'updated_by'           => auth()->id(),
             ]);
 
             /*
@@ -245,6 +248,7 @@ class BookingController extends Controller
                     : ($paidAmount >= $request->room_rent ? 'paid' : 'partial'),
 
                 'remarks'              => $request->remarks,
+                'updated_by'           => auth()->id(),
 
             ]);
 
@@ -727,6 +731,8 @@ class BookingController extends Controller
                 'unit_price'   => $unitPrice,
                 'total_amount' => $totalAmount,
                 'remarks'      => $request->remarks,
+                'created_by'   => auth()->id(),
+                'updated_by'   => auth()->id(),
             ]);
         });
 

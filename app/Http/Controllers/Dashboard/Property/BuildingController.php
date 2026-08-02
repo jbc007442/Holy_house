@@ -12,31 +12,61 @@ class BuildingController extends Controller
     /**
      * Display a listing of the resource.
      */
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
 
             $buildings = Building::withCount('rooms')
                 ->when($request->search, function ($query) use ($request) {
-                    $query->where('name', 'like', '%' . $request->search . '%')
-                        ->orWhere('code', 'like', '%' . $request->search . '%');
+
+                    $query->where(function ($q) use ($request) {
+
+                        $q->where('name', 'like', '%' . $request->search . '%')
+                            ->orWhere('code', 'like', '%' . $request->search . '%');
+                    });
                 })
                 ->latest()
-                ->get();
+                ->paginate(1);
 
             return response()->json([
+
                 'stats' => [
+
                     'totalBuildings' => Building::count(),
+
                     'activeBuildings' => Building::where('status', 'active')->count(),
+
                     'totalRooms' => Room::count(),
+
                 ],
-                'data' => $buildings,
+
+                'data' => $buildings->items(),
+
+                'pagination' => [
+
+                    'current_page' => $buildings->currentPage(),
+
+                    'last_page'    => $buildings->lastPage(),
+
+                    'per_page'     => $buildings->perPage(),
+
+                    'total'        => $buildings->total(),
+
+                    'from'         => $buildings->firstItem(),
+
+                    'to'           => $buildings->lastItem(),
+
+                ],
+
             ]);
         }
 
         return view('dashboard.property.buildings.index');
     }
 
+
+    
     /**
      * Show the form for creating a new resource.
      */
@@ -59,7 +89,11 @@ class BuildingController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Building::create($validated);
+        Building::create([
+            ...$validated,
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
+        ]);
 
         return redirect()
             ->route('dashboard.property.buildings')
@@ -102,7 +136,10 @@ class BuildingController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $building->update($validated);
+        $building->update([
+            ...$validated,
+            'updated_by' => auth()->id(),
+        ]);
 
         return redirect()
             ->route('dashboard.property.buildings')

@@ -99,6 +99,18 @@
             <tbody id="movementTableBody"></tbody>
         </table>
 
+        <div class="border-t bg-white px-6 py-4">
+            <div class="flex items-center justify-between">
+
+                <div id="paginationInfo" class="text-sm text-zinc-500">
+                </div>
+
+                <div id="pagination" class="flex items-center gap-2">
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
 @endsection

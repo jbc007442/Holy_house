@@ -36,6 +36,8 @@ class UserController extends Controller
         return view('dashboard.users.index');
     }
 
+  
+
     /**
      * Show the form for creating a new user.
      */

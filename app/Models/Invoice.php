@@ -10,6 +10,8 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_no',
         'booking_id',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -18,5 +20,21 @@ class Invoice extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    /**
+     * Audit 
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Audit 
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

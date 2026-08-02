@@ -13,48 +13,109 @@ class RoomController extends Controller
     /**
      * Display a listing of the resource.
      */
+   
+
     public function index(Request $request)
     {
         $query = Room::with('building');
 
+        /*
+    |--------------------------------------------------------------------------
+    | Search
+    |--------------------------------------------------------------------------
+    */
+
         if ($request->filled('search')) {
+
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
+
                 $q->where('room_number', 'like', "%{$search}%")
                     ->orWhere('floor', 'like', "%{$search}%")
                     ->orWhereHas('building', function ($b) use ($search) {
+
                         $b->where('name', 'like', "%{$search}%");
                     });
             });
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | Building Filter
+    |--------------------------------------------------------------------------
+    */
+
         if ($request->filled('building')) {
+
             $query->where('building_id', $request->building);
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | Status Filter
+    |--------------------------------------------------------------------------
+    */
+
         if ($request->filled('status')) {
+
             $query->where('status', $request->status);
         }
 
-        $rooms = $query->latest()->get();
+        /*
+    |--------------------------------------------------------------------------
+    | Ajax
+    |--------------------------------------------------------------------------
+    */
 
         if ($request->ajax()) {
+
+            $rooms = $query
+                ->latest()
+                ->paginate(10);
 
             return response()->json([
 
                 'stats' => [
+
                     'totalRooms' => Room::count(),
+
                     'availableRooms' => Room::where('status', 'available')->count(),
+
                     'runningRooms' => Room::where('status', 'running')->count(),
+
                     'blockedRooms' => Room::where('status', 'blocked')->count(),
+
                     'maintenanceRooms' => Room::where('status', 'maintenance')->count(),
+
                 ],
 
-                'data' => $rooms
+                'data' => $rooms->items(),
+
+                'pagination' => [
+
+                    'current_page' => $rooms->currentPage(),
+
+                    'last_page' => $rooms->lastPage(),
+
+                    'per_page' => $rooms->perPage(),
+
+                    'total' => $rooms->total(),
+
+                    'from' => $rooms->firstItem(),
+
+                    'to' => $rooms->lastItem(),
+
+                ],
 
             ]);
         }
+
+        /*
+    |--------------------------------------------------------------------------
+    | View
+    |--------------------------------------------------------------------------
+    */
 
         $buildings = Building::where('status', 'active')
             ->orderBy('name')
@@ -83,6 +144,7 @@ class RoomController extends Controller
      */
     public function store(Request $request)
     {
+ 
         $validated = $request->validate([
             'building_id' => ['required', 'exists:buildings,id'],
 
@@ -105,7 +167,12 @@ class RoomController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        Room::create($validated);
+        Room::create([
+            ...$validated,
+
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
+        ]);
 
         return redirect()
             ->route('dashboard.property.rooms')
@@ -166,7 +233,11 @@ class RoomController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        $room->update($validated);
+        $room->update([
+            ...$validated,
+
+            'updated_by' => auth()->id(),
+        ]);
 
         return redirect()
             ->route('dashboard.property.rooms')

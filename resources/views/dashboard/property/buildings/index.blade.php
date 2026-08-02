@@ -136,6 +136,7 @@
                     </tbody>
 
                 </table>
+                <div id="paginationWrapper" class="border-t border-zinc-200 px-5 py-4"></div>
 
             </div>
 

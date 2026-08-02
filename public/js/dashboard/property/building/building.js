@@ -1,110 +1,132 @@
+$(function () {
+    loadBuildings();
 
-        $(function() {
+    let timer;
 
-            loadBuildings();
+    $("#searchBuilding").keyup(function () {
+        clearTimeout(timer);
 
-            let timer;
+        timer = setTimeout(function () {
+            loadBuildings(
+                window.buildingConfig.indexUrl,
+                $("#searchBuilding").val(),
+            );
+        }, 300);
+    });
 
-            $('#searchBuilding').keyup(function() {
+    $(document).on("click", ".pagination-btn", function () {
+        const page = $(this).data("page");
 
-                clearTimeout(timer);
+        loadBuildings(
+            `${window.buildingConfig.indexUrl}?page=${page}`,
+            $("#searchBuilding").val(),
+        );
+    });
 
-                timer = setTimeout(function() {
+    $(document).on("click", ".deleteBuilding", function () {
+        if (!confirm("Delete this building?")) {
+            return;
+        }
 
-                    loadBuildings($('#searchBuilding').val());
+        let id = $(this).data("id");
 
-                }, 300);
+        $.ajax({
+            url: "/dashboard/buildings/" + id,
 
-            });
+            type: "DELETE",
 
-            function loadBuildings(search = '') {
+            data: {
+                _token: window.buildingConfig.csrf,
+            },
 
-                $.ajax({
+            beforeSend: function () {
+                showSaving();
+            },
 
-                    url: window.buildingConfig.indexUrl,
+            success: function (response) {
+                window.notyf.success(response.message);
 
-                    type: "GET",
+                loadBuildings(
+                    window.buildingConfig.indexUrl,
+                    $("#searchBuilding").val(),
+                );
+            },
 
-                    data: {
-                        search: search
-                    },
+            error: function (xhr) {
+                window.notyf.error(
+                    xhr.responseJSON?.message ?? "Failed to delete building.",
+                );
+            },
+        });
+    });
+});
 
-                    beforeSend: function() {
+function loadBuildings(url = window.buildingConfig.indexUrl, search = "") {
+    $.ajax({
+        url: url,
 
-                        $('#buildingTable').html(`
-                    <tr>
-                        <td colspan="5" class="text-center py-10 text-zinc-500">
-                            <i class="fa-solid fa-spinner fa-spin text-xl mb-3 block"></i>
-                            Loading buildings...
-                        </td>
-                    </tr>
-                `);
+        type: "GET",
 
-                    },
+        data: {
+            search: search,
+        },
 
-                    success: function(response) {
+        beforeSend: function () {
+            $("#buildingTable").html(`
+                <tr>
+                    <td colspan="5" class="text-center py-10 text-zinc-500">
+                        <i class="fa-solid fa-spinner fa-spin text-xl mb-3 block"></i>
+                        Loading buildings...
+                    </td>
+                </tr>
+            `);
+        },
 
-                        $('#totalBuildings').text(response.stats.totalBuildings);
+        success: function (response) {
+            $("#totalBuildings").text(response.stats.totalBuildings);
 
-                        $('#activeBuildings').text(response.stats.activeBuildings);
+            $("#activeBuildings").text(response.stats.activeBuildings);
 
-                        $('#totalRooms').text(response.stats.totalRooms);
+            $("#totalRooms").text(response.stats.totalRooms);
 
-                        let html = '';
+            let html = "";
 
-                        if (response.data.length == 0) {
-
-                            html = `
+            if (response.data.length === 0) {
+                html = `
                     <tr>
                         <td colspan="5" class="text-center py-10 text-zinc-500">
                             No buildings found.
                         </td>
                     </tr>
-                    `;
-
-                        } else {
-
-                            $.each(response.data, function(index, building) {
-
-                                html += `
+                `;
+            } else {
+                $.each(response.data, function (index, building) {
+                    html += `
 
                         <tr class="border-t hover:bg-zinc-50">
 
                             <td class="px-5 py-4 font-medium">
-
                                 ${building.name}
-
                             </td>
 
                             <td class="px-5 py-4">
-
                                 ${building.code}
-
                             </td>
 
                             <td class="px-5 py-4 text-center">
-
                                 ${building.rooms_count}
-
                             </td>
 
                             <td class="px-5 py-4 text-center">
 
                                 ${
-                                    building.status=='active'
-
-                                    ?
-
-                                    `<span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                                            Active
-                                        </span>`
-
-                                    :
-
-                                    `<span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium">
-                                            Inactive
-                                        </span>`
-
+                                    building.status === "active"
+                                        ? `<span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+                                        Active
+                                    </span>`
+                                        : `<span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+                                        Inactive
+                                    </span>`
                                 }
 
                             </td>
@@ -141,55 +163,70 @@
 
                         </tr>
 
-                        `;
-
-                            });
-
-                        }
-
-                        $('#buildingTable').html(html);
-
-                    }
-
+                    `;
                 });
-
             }
 
-            $(document).on('click', '.deleteBuilding', function() {
+            $("#buildingTable").html(html);
 
-                if (!confirm('Delete this building?')) {
-                    return;
-                }
+            let pagination = "";
 
-                let id = $(this).data('id');
+            if (response.pagination.last_page > 1) {
+                const current = response.pagination.current_page;
+                const last = response.pagination.last_page;
 
-                $.ajax({
-                    url: "/dashboard/buildings/" + id,
+                pagination = `
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
 
-                    type: "DELETE",
+            <div class="text-sm text-zinc-500">
+                Showing ${response.pagination.from} to ${response.pagination.to} of ${response.pagination.total} entries
+            </div>
 
-                    data: {
-                        _token: window.buildingConfig.csrf,
-                    },
+            <div class="flex items-center gap-3">
 
-                    beforeSend: function () {
-                        showSaving();
-                    },
+                <button
+                    class="pagination-btn px-4 py-2 border rounded-lg hover:bg-zinc-100 disabled:opacity-50"
+                    data-page="${current - 1}"
+                    ${current === 1 ? "disabled" : ""}>
+                    <i class="fa-solid fa-chevron-left mr-1"></i>
+                    Previous
+                </button>
 
-                    success: function (response) {
-                        window.notyf.success(response.message);
+                <span class="text-sm font-medium text-zinc-600">
+                    Page ${current} of ${last}
+                </span>
 
-                        loadBuildings($("#searchBuilding").val());
-                    },
+                <button
+                    class="pagination-btn px-4 py-2 border rounded-lg hover:bg-zinc-100 disabled:opacity-50"
+                    data-page="${current + 1}"
+                    ${current === last ? "disabled" : ""}>
+                    Next
+                    <i class="fa-solid fa-chevron-right ml-1"></i>
+                </button>
 
-                    error: function (xhr) {
-                        window.notyf.error(
-                            xhr.responseJSON?.message ||
-                                "Failed to delete building.",
-                        );
-                    },
-                });
+            </div>
 
-            });
+        </div>
+    `;
+            } else {
+                pagination = `
+        <div class="flex justify-between items-center">
 
-        });
+            <div class="text-sm text-zinc-500">
+                Showing ${response.pagination.from ?? 0}
+                to ${response.pagination.to ?? 0}
+                of ${response.pagination.total ?? 0} entries
+            </div>
+
+            <div class="text-sm font-medium text-zinc-600">
+                Page 1 of 1
+            </div>
+
+        </div>
+    `;
+            }
+
+            $("#paginationWrapper").html(pagination);
+        },
+    });
+}
