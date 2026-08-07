@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Dashboard\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\Building;
 use App\Models\StockMovement;
+use App\Models\Room;
 use App\Models\PurchaseHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -84,11 +86,19 @@ class StockMovementController extends Controller
             ->orderBy('item_name')
             ->get();
 
+        $buildings = Building::with('floors')
+            ->orderBy('name')
+            ->get();
+
         return view(
             'dashboard.inventory.stock-movement.create',
-            compact('items')
+            compact(
+                'items',
+                'buildings'
+            )
         );
     }
+
 
     /**
      * Store movement.
@@ -96,12 +106,18 @@ class StockMovementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'item_id'   => ['required', 'exists:items,id'],
-            'type'      => ['required', 'in:out,adjustment'],
-            'quantity'  => ['required', 'integer', 'min:1'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'remarks'   => ['nullable', 'string'],
+            'item_id'           => ['required', 'exists:items,id'],
+            'building_id'       => ['nullable', 'exists:buildings,id'],
+            'building_floor_id' => ['nullable', 'exists:building_floors,id'],
+            'room_id'           => ['nullable', 'exists:rooms,id'],
+            'kitchen'           => ['nullable', 'boolean'],
+            'other_property'    => ['nullable', 'string', 'max:255'],
+            'type'              => ['required', 'in:out,adjustment'],
+            'quantity'          => ['required', 'integer', 'min:1'],
+            'remarks'           => ['nullable', 'string'],
         ]);
+
+        $validated['kitchen'] = $request->boolean('kitchen');
 
         $item = Item::findOrFail($validated['item_id']);
 
@@ -110,25 +126,33 @@ class StockMovementController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'quantity' => "Only {$item->opening_stock} item(s) available."
+                    'quantity' => "Only {$item->current_stock} item(s) available."
                 ]);
         }
 
         DB::transaction(function () use ($validated, $item) {
 
+            // Deduct Stock
             $item->decreaseStock($validated['quantity']);
 
-            // Update audit on Item
+            // Update Item Audit
             $item->update([
                 'updated_by' => auth()->id(),
             ]);
 
             // Create Stock Movement
             StockMovement::create([
-                ...$validated,
-
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
+                'item_id'            => $validated['item_id'],
+                'building_id'        => $validated['building_id'] ?? null,
+                'building_floor_id'  => $validated['building_floor_id'] ?? null,
+                'room_id'            => $validated['room_id'] ?? null,
+                'kitchen'            => $validated['kitchen'],
+                'other_property'     => $validated['other_property'] ?? null,
+                'type'               => $validated['type'],
+                'quantity'           => $validated['quantity'],
+                'remarks'            => $validated['remarks'] ?? null,
+                'created_by'         => auth()->id(),
+                'updated_by'         => auth()->id(),
             ]);
         });
 
@@ -142,7 +166,13 @@ class StockMovementController extends Controller
      */
     public function show(StockMovement $stockMovement)
     {
-        $stockMovement->load('item');
+        $stockMovement->load([
+            'item',
+            'building',
+            'buildingFloor',
+            'room',
+            'creator',
+        ]);
 
         return view(
             'dashboard.inventory.stock-movement.show',
@@ -155,13 +185,27 @@ class StockMovementController extends Controller
      */
     public function edit(StockMovement $stockMovement)
     {
+        $stockMovement->load([
+            'item',
+            'building.floors',
+            'room',
+        ]);
+
         $items = Item::where('status', true)
             ->orderBy('item_name')
             ->get();
 
+        $buildings = Building::with('floors')
+            ->orderBy('name')
+            ->get();
+
         return view(
             'dashboard.inventory.stock-movement.edit',
-            compact('stockMovement', 'items')
+            compact(
+                'stockMovement',
+                'items',
+                'buildings'
+            )
         );
     }
 
@@ -171,12 +215,18 @@ class StockMovementController extends Controller
     public function update(Request $request, StockMovement $stockMovement)
     {
         $validated = $request->validate([
-            'item_id'   => ['required', 'exists:items,id'],
-            'type'      => ['required', 'in:out,adjustment'],
-            'quantity'  => ['required', 'integer', 'min:1'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'remarks'   => ['nullable', 'string'],
+            'item_id'           => ['required', 'exists:items,id'],
+            'building_id'       => ['nullable', 'exists:buildings,id'],
+            'building_floor_id' => ['nullable', 'exists:building_floors,id'],
+            'room_id'           => ['nullable', 'exists:rooms,id'],
+            'kitchen'           => ['nullable', 'boolean'],
+            'other_property'    => ['nullable', 'string', 'max:255'],
+            'type'              => ['required', 'in:out,adjustment'],
+            'quantity'          => ['required', 'integer', 'min:1'],
+            'remarks'           => ['nullable', 'string'],
         ]);
+
+        $validated['kitchen'] = $request->boolean('kitchen');
 
         DB::transaction(function () use ($validated, $stockMovement) {
 
@@ -189,13 +239,13 @@ class StockMovementController extends Controller
                 'updated_by' => auth()->id(),
             ]);
 
-            // Apply new movement
+            // Apply new stock deduction
             $newItem = Item::findOrFail($validated['item_id']);
 
             if (! $newItem->hasStock($validated['quantity'])) {
 
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'quantity' => "Only {$newItem->opening_stock} item(s) available."
+                    'quantity' => "Only {$newItem->current_stock} item(s) available."
                 ]);
             }
 
@@ -205,10 +255,18 @@ class StockMovementController extends Controller
                 'updated_by' => auth()->id(),
             ]);
 
-            // Update movement
+            // Update Stock Movement
             $stockMovement->update([
-                ...$validated,
-                'updated_by' => auth()->id(),
+                'item_id'           => $validated['item_id'],
+                'building_id'       => $validated['building_id'] ?? null,
+                'building_floor_id' => $validated['building_floor_id'] ?? null,
+                'room_id'           => $validated['room_id'] ?? null,
+                'kitchen'           => $validated['kitchen'],
+                'other_property'    => $validated['other_property'] ?? null,
+                'type'              => $validated['type'],
+                'quantity'          => $validated['quantity'],
+                'remarks'           => $validated['remarks'] ?? null,
+                'updated_by'        => auth()->id(),
             ]);
         });
 
@@ -350,5 +408,27 @@ class StockMovementController extends Controller
             'stock_movements' => $stockMovements,
 
         ]);
+    }
+
+    /**
+     * Get Rooms for Stock Movement
+     */
+    public function getStockRooms(Request $request, $buildingId)
+    {
+        $rooms = Room::where('building_id', $buildingId)
+            ->when($request->filled('floor'), function ($query) use ($request) {
+                $query->where('floor', trim($request->floor));
+            })
+            ->select(
+                'id',
+                'room_number',
+                'floor',
+                'base_price',
+                'status'
+            )
+            ->orderBy('room_number')
+            ->get();
+
+        return response()->json($rooms);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard\Property;
 
 use App\Http\Controllers\Controller;
 use App\Models\Building;
+use App\Models\BuildingFloor;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -136,7 +137,14 @@ class RoomController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('dashboard.property.rooms.create', compact('buildings'));
+        $floors = BuildingFloor::where('status', 'active')
+            ->orderBy('sort_order')
+            ->get();
+
+        return view(
+            'dashboard.property.rooms.create',
+            compact('buildings', 'floors')
+        );
     }
 
     /**
@@ -200,7 +208,14 @@ class RoomController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('dashboard.property.rooms.edit', compact('room', 'buildings'));
+        $floors = BuildingFloor::where('status', 'active')
+            ->orderBy('sort_order')
+            ->get();
+
+        return view(
+            'dashboard.property.rooms.edit',
+            compact('room', 'buildings', 'floors')
+        );
     }
 
     /**
@@ -288,10 +303,9 @@ class RoomController extends Controller
             ->orderBy('name')
             ->get();
 
-        $floors = Room::select('floor')
-            ->distinct()
-            ->orderBy('floor')
-            ->pluck('floor');
+        $floors = BuildingFloor::where('status', 'active')
+            ->orderBy('sort_order')
+            ->pluck('name');
 
         return view(
             'dashboard.property.room-status',
@@ -344,5 +358,18 @@ class RoomController extends Controller
         return redirect()
             ->route('dashboard.property.rooms.show', $room->id)
             ->with('success', 'Room status updated successfully.');
+    }
+
+    /**
+     * Get all floors for a specific building.
+     */
+    public function getFloors($buildingId)
+    {
+        return response()->json(
+            BuildingFloor::where('building_id', $buildingId)
+                ->where('status', 'active')
+                ->orderBy('sort_order')
+                ->get(['id', 'name'])
+        );
     }
 }

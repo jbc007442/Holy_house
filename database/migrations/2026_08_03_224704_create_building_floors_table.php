@@ -11,20 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('buildings', function (Blueprint $table) {
+        Schema::create('building_floors', function (Blueprint $table) {
             $table->id();
 
-            $table->string('name');
-            $table->string('code')->unique();
+            $table->foreignId('building_id')
+                ->constrained('buildings')
+                ->cascadeOnDelete();
+
+            $table->string('name'); // Basement, Ground Floor, First Floor, etc.
+
+            $table->unsignedInteger('sort_order')->default(1);
 
             $table->enum('status', [
                 'active',
                 'inactive',
             ])->default('active');
-
-            $table->text('address')->nullable();
-
-            $table->text('description')->nullable();
 
             // Audit
             $table->foreignId('created_by')
@@ -38,6 +39,9 @@ return new class extends Migration
                 ->nullOnDelete();
 
             $table->timestamps();
+
+            // Prevent duplicate floor names within the same building
+            $table->unique(['building_id', 'name']);
         });
     }
 
@@ -46,6 +50,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('buildings');
+        Schema::dropIfExists('building_floors');
     }
 };

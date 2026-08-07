@@ -280,7 +280,7 @@
 
                 <div class="p-6">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <div>
 
@@ -291,7 +291,7 @@
                             </label>
 
                             <select id="building_id" name="building_id"
-                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                                class="w-full rounded-xl border border-zinc-300 px-4 py-3 cursor-not-allowed" disabled>
 
                                 <option value="">Select Building</option>
 
@@ -306,6 +306,20 @@
 
                             </select>
 
+                        </div>
+
+                        <!-- Floor -->
+                        <div>
+                            <label class="block mb-2 text-sm font-medium">
+                                Floor
+                            </label>
+
+                            <select id="floor" name="floor"
+                                class="w-full rounded-xl border border-zinc-300 px-4 py-3 cursor-not-allowed" disabled>
+
+                                <option value="">Select Floor</option>
+
+                            </select>
                         </div>
 
                         <div>
@@ -429,8 +443,7 @@
 
                             </label>
 
-                            <input type="number" name="room_rent" id="room_rent"
-                                value="{{ old('room_rent', $booking->room_rent) }}"
+                            <input type="number" name="room_rent" id="room_rent" value="{{ $booking->room_rent }}"
                                 class="w-full rounded-xl border border-zinc-300 px-4 py-3">
 
                         </div>
@@ -637,19 +650,71 @@
 
 @push('scripts')
     <script>
+        let selectedFloor = "{{ $booking->room->floor }}";
+        let selectedRoom = "{{ $booking->room_id }}";
         $(function() {
+
+            //-------------------------------------------------------
+            // Floor Change
+            //-------------------------------------------------------
+
+            function loadFloors() {
+
+                let buildingId = $('#building_id').val();
+
+                $('#floor').html('<option value="">Loading...</option>');
+
+                if (!buildingId) {
+                    $('#floor').html('<option value="">Select Floor</option>');
+                    return;
+                }
+
+                $.ajax({
+
+                    url: "{{ route('dashboard.property.buildings.get-floors', ':id') }}"
+                        .replace(':id', buildingId),
+
+                    type: "GET",
+
+                    dataType: "json",
+
+                    success: function(floors) {
+
+                        let html = '<option value="">Select Floor</option>';
+
+                        $.each(floors, function(i, floor) {
+
+                            html += `
+                    <option value="${floor.name}"
+                        ${selectedFloor == floor.name ? 'selected' : ''}>
+                        ${floor.name}
+                    </option>
+                `;
+
+                        });
+
+                        $('#floor').html(html);
+
+                        loadRooms();
+
+                    }
+
+                });
+
+            }
 
             //-------------------------------------------------------
             // Building Change
             //-------------------------------------------------------
 
-            $('#building_id').on('change', function() {
+            function loadRooms() {
 
-                let buildingId = $(this).val();
+                let buildingId = $('#building_id').val();
+                let floor = $('#floor').val();
 
                 $('#room_id').html('<option>Loading...</option>');
 
-                if (!buildingId) {
+                if (!buildingId || !floor) {
 
                     $('#room_id').html('<option value="">Select Room</option>');
 
@@ -664,6 +729,11 @@
 
                     type: "GET",
 
+                    data: {
+                        floor: floor,
+                        selected_room: selectedRoom
+                    },
+
                     dataType: "json",
 
                     success: function(rooms) {
@@ -673,24 +743,25 @@
                         $.each(rooms, function(i, room) {
 
                             html += `
-                        <option
-                            value="${room.id}"
-                            data-rent="${room.base_price}"
-                            data-status="${room.status}"
-                            ${room.id=={{ $booking->room_id }} ? 'selected' : ''}>
-                            ${room.room_number}
-                        </option>
-                    `;
+                    <option
+                        value="${room.id}"
+                        data-rent="${room.base_price}"
+                        data-status="${room.status}"
+                        ${selectedRoom == room.id ? 'selected' : ''}>
+                        ${room.room_number}
+                    </option>
+                `;
 
                         });
 
-                        $('#room_id').html(html).trigger('change');
+                        $('#room_id').html(html);
+                        $('#room_id').trigger('change');
 
                     }
 
                 });
 
-            });
+            }
 
             //-------------------------------------------------------
             // Room Change
@@ -705,8 +776,6 @@
                 let status = selected.data('status') || 'N/A';
 
                 $('#roomRent').text('₹' + rent);
-
-                $('#room_rent').val(rent);
 
                 let badge = $("#roomStatus");
 
@@ -740,7 +809,7 @@
             // Trigger Building
             //-------------------------------------------------------
 
-            $('#room_id').trigger('change');
+            loadFloors();
 
         });
     </script>

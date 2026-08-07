@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -14,15 +13,31 @@ class Booking extends Model
         'check_in',
         'check_out',
         'guest_count',
+
+        // Charges
         'room_rent',
         'chargeable_amount',
         'complimentary_amount',
         'total_amount',
+
+        // Payment
         'paid_amount',
         'balance_amount',
         'payment_status',
+
+        // Status
         'status',
+
+        // Invoice Details
+        'rate_type',
+        'bill_to',
+        'bill_to_gstin',
+        'hsn_code',
+
+        // Remarks
         'remarks',
+
+        // Audit
         'created_by',
         'updated_by',
     ];
@@ -30,6 +45,7 @@ class Booking extends Model
     protected $casts = [
         'check_in' => 'date',
         'check_out' => 'date',
+
         'room_rent' => 'decimal:2',
         'chargeable_amount' => 'decimal:2',
         'complimentary_amount' => 'decimal:2',
@@ -71,14 +87,17 @@ class Booking extends Model
     }
 
     /**
-     *  Audit
+     * Audit
      */
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updater()
+    /**
+     * Audit
+     */
+    public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }

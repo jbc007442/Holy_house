@@ -23,7 +23,9 @@ class BookingController extends Controller
      */
     public function create()
     {
-        $buildings = Building::all();
+        $buildings = Building::with('floors')
+            ->orderBy('name')
+            ->get();
 
         return view('dashboard.bookings.create', compact('buildings'));
     }
@@ -32,16 +34,28 @@ class BookingController extends Controller
     /**
      *. getRooms
      */
-    public function getRooms($buildingId)
+    public function getRooms(Request $request, $buildingId)
     {
         $rooms = Room::where('building_id', $buildingId)
-            ->where('status', 'available')
+            ->when($request->filled('floor'), function ($query) use ($request) {
+                $query->where('floor', $request->floor);
+            })
+            ->where(function ($query) use ($request) {
+
+                $query->where('status', 'available');
+
+                if ($request->filled('selected_room')) {
+                    $query->orWhere('id', $request->selected_room);
+                }
+            })
             ->select(
                 'id',
                 'room_number',
+                'floor',
                 'base_price',
                 'status'
             )
+            ->orderBy('room_number')
             ->get();
 
         return response()->json($rooms);
@@ -174,9 +188,9 @@ class BookingController extends Controller
     /**
      * Booking Details
      */
-    public function show(string $id)
+    public function show(Booking $booking)
     {
-        return view('dashboard.bookings.show');
+        return view('dashboard.bookings.show', compact('booking'));
     }
 
     /**
@@ -309,6 +323,67 @@ class BookingController extends Controller
                 ->withInput()
                 ->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Update Booking Services
+     */
+    public function updateService(Request $request, BookingService $service)
+    {
+        $validated = $request->validate([
+            'quantity'   => 'required|integer|min:1',
+            'unit_price' => 'required|numeric|min:0',
+        ]);
+
+        DB::transaction(function () use ($validated, $service) {
+
+            // Restore stock if complimentary
+            if ($service->type === 'complimentary' && $service->item) {
+                $service->item->increaseStock($service->quantity);
+
+                if (!$service->item->hasStock($validated['quantity'])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'quantity' => 'Insufficient stock available.'
+                    ]);
+                }
+
+                $service->item->decreaseStock($validated['quantity']);
+
+                $validated['unit_price'] = 0;
+            }
+
+            $service->update([
+                'quantity'     => $validated['quantity'],
+                'unit_price'   => $validated['unit_price'],
+                'total_amount' => $validated['quantity'] * $validated['unit_price'],
+                'updated_by'   => auth()->id(),
+            ]);
+        });
+
+        return back()->with('success', 'Service updated successfully.');
+    }
+
+    /**
+     * Update Invoice Details
+     */
+    public function updateInvoiceDetails(Request $request, Booking $booking)
+    {
+        $validated = $request->validate([
+            'rate_type'     => 'nullable|in:EP,CP,MAP',
+            'bill_to'       => 'nullable|string|max:255',
+            'bill_to_gstin' => 'nullable|string|max:50',
+            'hsn_code'      => 'nullable|string|max:20',
+        ]);
+
+        $booking->update([
+            'rate_type'     => $validated['rate_type'],
+            'bill_to'       => $validated['bill_to'],
+            'bill_to_gstin' => $validated['bill_to_gstin'],
+            'hsn_code'      => $validated['hsn_code'] ?: '998552',
+            'updated_by'    => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Invoice details updated successfully.');
     }
 
     /**
@@ -741,8 +816,6 @@ class BookingController extends Controller
             ->with('success', 'Guest service added successfully.');
     }
 
-
-
     /**
      * Delete
      */
@@ -766,5 +839,41 @@ class BookingController extends Controller
             'success',
             'Service deleted successfully.'
         );
+    }
+
+    /**
+     * Get Floors By Building
+     */
+    public function getFloors(Building $building)
+    {
+        return response()->json(
+            $building->floors()
+                ->where('status', 'active')
+                ->orderBy('sort_order')
+                ->get([
+                    'id',
+                    'name',
+                    'sort_order',
+                ])
+        );
+    }
+
+    /**
+     * Show Detail quick view of a booking
+     */
+    public function details(Booking $booking)
+    {
+        $booking->load([
+            'room.building',
+            'guests',
+            'services.item',
+            'payments.creator',
+            'creator',
+            'updater',
+        ]);
+
+        return response()->json([
+            'booking' => $booking,
+        ]);
     }
 }

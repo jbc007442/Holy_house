@@ -91,6 +91,7 @@ Route::middleware('auth')
         Route::get('/buildings/{building}/edit', [BuildingController::class, 'edit'])->name('property.buildings.edit');
         Route::put('/buildings/{building}', [BuildingController::class, 'update'])->name('property.buildings.update');
         Route::delete('/buildings/{building}', [BuildingController::class, 'destroy'])->name('property.buildings.destroy');
+        Route::get('/building-floors/{building}', [BuildingController::class, 'getFloors'])->name('property.buildings.get-floors');
 
         // Rooms
 
@@ -103,6 +104,7 @@ Route::middleware('auth')
         Route::delete('/rooms/{room}', [RoomController::class, 'destroy'])->name('property.rooms.destroy');
         Route::get('/room-status', [RoomController::class, 'roomStatus'])->name('property.room-status');
         Route::patch('/rooms/{room}/change-status', [RoomController::class, 'changeStatus'])->name('rooms.change-status');
+        Route::get('/buildings/{building}/floors', [RoomController::class, 'getFloors'])->name('property.buildings.floors');
 
         // =====================================
         // Bookings
@@ -110,7 +112,7 @@ Route::middleware('auth')
 
         Route::get('/bookings/create', [BookingController::class, 'create'])->name('bookings.create');
         Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
-        Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('bookings.show');
+        Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
         Route::get('/bookings/{id}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
         Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('bookings.update');
         Route::patch('/bookings/{id}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
@@ -123,6 +125,9 @@ Route::middleware('auth')
         Route::post('/bookings/{booking}/services', [BookingController::class, 'storeService'])->name('bookings.services.store');
         Route::delete('/bookings/services/{service}', [BookingController::class, 'deleteService'])->name('bookings.services.delete');
         Route::get('/bookings/history/ajax', [BookingController::class, 'ajaxHistory'])->name('bookings.history.ajax');
+        Route::patch('/bookings/services/{service}', [BookingController::class, 'updateService'])->name('bookings.services.update');
+        Route::patch('/bookings/{booking}/invoice', [BookingController::class, 'updateInvoiceDetails'])->name('bookings.invoice.update');
+        Route::get('/bookings/{booking}/details', [BookingController::class, 'details'])->name('bookings.details');
 
         /*
         |--------------------------------------------------------------------------
@@ -162,9 +167,12 @@ Route::middleware('auth')
         Route::get('/stock-movement/{stockMovement}/edit', [StockMovementController::class, 'edit'])->name('inventory.stock-movement.edit');
         Route::put('/stock-movement/{stockMovement}', [StockMovementController::class, 'update'])->name('inventory.stock-movement.update');
         Route::delete('/stock-movement/{stockMovement}', [StockMovementController::class, 'destroy'])->name('inventory.stock-movement.destroy');
+        //newly added routes for stock movement
+        Route::get('/stock-movement/buildings/{building}/rooms', [StockMovementController::class, 'getStockRooms'])->name('inventory.stock-movement.rooms');
         Route::get('/stock-report', [StockMovementController::class, 'stockReport'])->name('inventory.stock-report');
-        Route::get('/stock-per-item/{item}',[StockMovementController::class, 'stockPerItem'])->name('inventory.stock-per-item');
-        Route::get('/stock-per-item/{item}/data',[StockMovementController::class, 'stockPerItemData'])->name('inventory.stock-per-item.data');
+        Route::get('/stock-per-item/{item}', [StockMovementController::class, 'stockPerItem'])->name('inventory.stock-per-item');
+        Route::get('/stock-per-item/{item}/data', [StockMovementController::class, 'stockPerItemData'])->name('inventory.stock-per-item.data');
+
 
         /*
         |--------------------------------------------------------------------------

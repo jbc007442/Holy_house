@@ -5,29 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class StockMovement extends Model
+class BuildingFloor extends Model
 {
     protected $fillable = [
-        'item_id',
         'building_id',
-        'building_floor_id',
-        'room_id',
-        'kitchen',
-        'other_property',
-        'type',
-        'quantity',
-        'remarks',
+        'name',
+        'sort_order',
+        'status',
         'created_by',
         'updated_by',
     ];
-
-    /**
-     * Inventory Item
-     */
-    public function item(): BelongsTo
-    {
-        return $this->belongsTo(Item::class);
-    }
 
     /**
      * Building
@@ -35,22 +22,6 @@ class StockMovement extends Model
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
-    }
-
-    /**
-     * Building Floor
-     */
-    public function buildingFloor(): BelongsTo
-    {
-        return $this->belongsTo(BuildingFloor::class);
-    }
-
-    /**
-     * Room
-     */
-    public function room(): BelongsTo
-    {
-        return $this->belongsTo(Room::class);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard\Property;
 
 use App\Http\Controllers\Controller;
 use App\Models\Building;
+use App\Models\BuildingFloor;
 use App\Models\Room;
 use Illuminate\Http\Request;
 
@@ -66,7 +67,7 @@ class BuildingController extends Controller
     }
 
 
-    
+
     /**
      * Show the form for creating a new resource.
      */
@@ -83,17 +84,33 @@ class BuildingController extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'code'        => 'required|string|max:50|unique:buildings,code',
-            'floors'      => 'nullable|integer|min:1',
+            'floors'      => 'required|array|min:1',
+            'floors.*'    => 'required|string|max:255',
             'status'      => 'required|in:active,inactive',
             'address'     => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
-        Building::create([
-            ...$validated,
-            'created_by' => auth()->id(),
-            'updated_by' => auth()->id(),
+        $building = Building::create([
+            'name'        => $validated['name'],
+            'code'        => $validated['code'],
+            'status'      => $validated['status'],
+            'address'     => $validated['address'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'created_by'  => auth()->id(),
+            'updated_by'  => auth()->id(),
         ]);
+
+        foreach ($validated['floors'] as $index => $floor) {
+
+            $building->floors()->create([
+                'name'       => $floor,
+                'sort_order' => $index + 1,
+                'status'     => 'active',
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+            ]);
+        }
 
         return redirect()
             ->route('dashboard.property.buildings')
@@ -115,7 +132,7 @@ class BuildingController extends Controller
      */
     public function edit(string $id)
     {
-        $building = Building::findOrFail($id);
+        $building = Building::with('floors')->findOrFail($id);
 
         return view('dashboard.property.buildings.edit', compact('building'));
     }
@@ -130,16 +147,36 @@ class BuildingController extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'code'        => 'required|string|max:50|unique:buildings,code,' . $building->id,
-            'floors'      => 'nullable|integer|min:1',
+            'floors'      => 'required|array|min:1',
+            'floors.*'    => 'required|string|max:255',
             'status'      => 'required|in:active,inactive',
             'address'     => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $building->update([
-            ...$validated,
-            'updated_by' => auth()->id(),
+            'name'        => $validated['name'],
+            'code'        => $validated['code'],
+            'status'      => $validated['status'],
+            'address'     => $validated['address'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'updated_by'  => auth()->id(),
         ]);
+
+        // Remove existing floors
+        $building->floors()->delete();
+
+        // Add updated floors
+        foreach ($validated['floors'] as $index => $floor) {
+
+            $building->floors()->create([
+                'name'       => $floor,
+                'sort_order' => $index + 1,
+                'status'     => 'active',
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+            ]);
+        }
 
         return redirect()
             ->route('dashboard.property.buildings')
@@ -159,5 +196,22 @@ class BuildingController extends Controller
             'success' => true,
             'message' => 'Building deleted successfully.'
         ]);
+    }
+
+    /**
+     * Get Building Floors
+     */
+    public function getFloors(Building $building)
+    {
+        return response()->json(
+            $building->floors()
+                ->where('status', 'active')
+                ->orderBy('sort_order')
+                ->get([
+                    'id',
+                    'name',
+                    'sort_order'
+                ])
+        );
     }
 }

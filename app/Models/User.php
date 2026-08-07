@@ -248,4 +248,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(PurchaseHistory::class, 'updated_by');
     }
+
+    /**
+     * Audit
+     */
+    public function createdBuildingFloors()
+    {
+        return $this->hasMany(BuildingFloor::class, 'created_by');
+    }
+
+    /**
+     * Audit
+     */
+    public function updatedBuildingFloors()
+    {
+        return $this->hasMany(BuildingFloor::class, 'updated_by');
+    }
 }

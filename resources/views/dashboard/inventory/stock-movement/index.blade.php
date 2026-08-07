@@ -81,7 +81,6 @@
                 <col class="w-40"> <!-- Item -->
                 <col class="w-52"> <!-- Movement -->
                 <col class="w-28"> <!-- Quantity -->
-                <col class="w-40"> <!-- Reference -->
                 <col class="w-32"> <!-- Action -->
             </colgroup>
 
@@ -91,7 +90,6 @@
                     <th class="px-6 py-4 text-left font-semibold">Item</th>
                     <th class="px-6 py-4 text-left font-semibold">Movement Type</th>
                     <th class="px-6 py-4 text-right font-semibold">Quantity</th>
-                    <th class="px-6 py-4 text-left font-semibold">Reference</th>
                     <th class="px-6 py-4 text-center font-semibold">Action</th>
                 </tr>
             </thead>

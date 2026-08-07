@@ -74,7 +74,7 @@ function renderMovements(data) {
 
         html = `
             <tr>
-                <td colspan="6" class="text-center py-8 text-zinc-500">
+                <td colspan="5" class="text-center py-8 text-zinc-500">
                     No stock movements found.
                 </td>
             </tr>
@@ -106,10 +106,6 @@ function renderMovements(data) {
 
                 <td class="px-6 py-4 text-right font-semibold text-red-600">
                     -${movement.quantity}
-                </td>
-
-                <td class="px-6 py-4">
-                    ${movement.reference ?? "-"}
                 </td>
 
                 <td class="px-6 py-4">

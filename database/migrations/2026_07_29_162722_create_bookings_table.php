@@ -64,6 +64,19 @@ return new class extends Migration
             // Remarks
             $table->text('remarks')->nullable();
 
+            // Invoice Details
+            $table->enum('rate_type', [
+                'EP',
+                'CP',
+                'MAP',
+            ])->nullable();
+
+            $table->string('bill_to')->nullable();
+
+            $table->string('bill_to_gstin')->nullable();
+
+            $table->string('hsn_code')->default('998552');
+
             // Audit
 
             $table->foreignId('created_by')

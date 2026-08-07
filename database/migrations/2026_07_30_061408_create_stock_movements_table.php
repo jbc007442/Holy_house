@@ -19,6 +19,32 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+            // Building
+            $table->foreignId('building_id')
+                ->nullable()
+                ->constrained('buildings')
+                ->nullOnDelete();
+
+            // Building Floor
+            $table->foreignId('building_floor_id')
+                ->nullable()
+                ->constrained('building_floors')
+                ->nullOnDelete();
+
+            // Room
+            $table->foreignId('room_id')
+                ->nullable()
+                ->constrained('rooms')
+                ->nullOnDelete();
+
+            // Kitchen
+            $table->boolean('kitchen')
+                ->default(false);
+
+            // Other Property
+            $table->string('other_property')
+                ->nullable();
+
             // Movement Type
             $table->enum('type', [
                 'out',
@@ -28,11 +54,9 @@ return new class extends Migration
             // Quantity
             $table->unsignedInteger('quantity');
 
-            // Reference
-            $table->string('reference')->nullable();
-
             // Remarks
-            $table->text('remarks')->nullable();
+            $table->text('remarks')
+                ->nullable();
 
             // Audit
             $table->foreignId('created_by')

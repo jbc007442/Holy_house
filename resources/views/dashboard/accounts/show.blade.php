@@ -8,494 +8,26 @@
         $guest = $booking->guests->first();
     @endphp
 
-    {{-- <div class="max-w-4xl mx-auto">
-
-        <div class="bg-white border border-zinc-300 rounded-lg shadow-sm overflow-hidden">
-
-            <!-- Header -->
-            <!-- Invoice Header -->
-
-            <div class="border-b border-zinc-300 px-8 py-8">
-
-                <div class="text-center">
-
-                    <h1 class="text-4xl font-extrabold tracking-wide text-zinc-900 uppercase">
-                        Hotel Holy House
-                    </h1>
-
-                    <p class="mt-2 text-lg font-semibold text-zinc-800">
-                        GSTIN No. 06AJXPY2847D1ZK
-                    </p>
-
-                    <p class="mt-4 text-base text-zinc-700 leading-7">
-                        Hotel Holy House Near Artemis Hospital,
-                        Sector - 51, Gurugram, Haryana - 122001, India
-                    </p>
-
-                    <p class="mt-2 text-base text-zinc-700">
-                        <span class="font-semibold">Phone:</span>
-                        +91 8130131477
-                        &nbsp;&nbsp;|&nbsp;&nbsp;
-                        <span class="font-semibold">Email:</span>
-                        holyhouse9898@gmail.com
-                    </p>
-
-                </div>
-
-                <!-- Invoice Title -->
-
-                <div class="mt-8 text-center">
-
-                    <h2
-                        class="inline-block border-b-2 border-zinc-800 pb-2 text-2xl font-bold tracking-[0.2em] uppercase text-zinc-900">
-                        Tax Invoice
-                    </h2>
-
-                </div>
-
-            </div>
-
-            <div class="border-t border-b border-zinc-300 bg-zinc-50 px-6 py-4">
-
-                <div class="grid grid-cols-2 gap-8">
-
-                    <div>
-
-                        <h3 class="font-semibold text-zinc-800 mb-3">
-
-                            Bill To
-
-                        </h3>
-
-                        <table class="text-sm w-full">
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500 w-28">
-                                    Guest
-                                </td>
-
-                                <td class="font-medium">
-                                    {{ $guest?->guest_name }}
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500">
-                                    Mobile
-                                </td>
-
-                                <td>
-                                    {{ $guest?->mobile }}
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500">
-                                    Nationality
-                                </td>
-
-                                <td>
-                                    {{ $guest?->nationality }}
-                                </td>
-
-                            </tr>
-
-                        </table>
-
-                    </div>
-
-                    <div>
-
-                        <h3 class="font-semibold text-zinc-800 mb-3">
-
-                            Invoice Details
-
-                        </h3>
-
-                        <table class="text-sm w-full">
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500 w-32">
-
-                                    Invoice No
-
-                                </td>
-
-                                <td class="font-semibold">
-
-                                    {{ $invoice->invoice_no }}
-
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500">
-
-                                    Booking No
-
-                                </td>
-
-                                <td>
-
-                                    {{ $booking->booking_no }}
-
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500">
-
-                                    Room
-
-                                </td>
-
-                                <td>
-
-                                    {{ $booking->room->room_number }}
-
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500">
-
-                                    Check In
-
-                                </td>
-
-                                <td>
-
-                                    {{ \Carbon\Carbon::parse($booking->check_in)->format('d M Y') }}
-
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td class="py-1 text-zinc-500">
-
-                                    Check Out
-
-                                </td>
-
-                                <td>
-
-                                    {{ \Carbon\Carbon::parse($booking->check_out)->format('d M Y') }}
-
-                                </td>
-
-                            </tr>
-
-                        </table>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Charges Table -->
-
-            <div class="p-6">
-
-                <table class="w-full border border-zinc-300">
-
-                    <thead>
-
-                        <tr class="bg-indigo-600 text-white text-sm">
-
-                            <th class="px-3 py-3 text-left w-20">
-                                Qty
-                            </th>
-
-                            <th class="px-3 py-3 text-left">
-                                Description
-                            </th>
-
-                            <th class="px-3 py-3 text-right w-36">
-                                Rate
-                            </th>
-
-                            <th class="px-3 py-3 text-right w-40">
-                                Amount
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        <tr class="border-b">
-
-                            <td class="px-3 py-3">
-
-                                1
-
-                            </td>
-
-                            <td class="px-3 py-3">
-
-                                Room Rent
-
-                            </td>
-
-                            <td class="px-3 py-3 text-right">
-
-                                ₹{{ number_format($roomRent, 2) }}
-
-                            </td>
-
-                            <td class="px-3 py-3 text-right font-medium">
-
-                                ₹{{ number_format($roomRent, 2) }}
-
-                            </td>
-
-                        </tr>
-
-                        @foreach ($booking->services->where('type', 'chargeable') as $service)
-                            <tr class="border-b">
-
-                                <td class="px-3 py-3">
-
-                                    {{ $service->quantity }}
-
-                                </td>
-
-                                <td class="px-3 py-3">
-
-                                    {{ $service->service_name }}
-
-                                </td>
-
-                                <td class="px-3 py-3 text-right">
-
-                                    ₹{{ number_format($service->unit_price, 2) }}
-
-                                </td>
-
-                                <td class="px-3 py-3 text-right">
-
-                                    ₹{{ number_format($service->total_amount, 2) }}
-
-                                </td>
-
-                            </tr>
-                        @endforeach
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-            <!-- Totals -->
-
-            <div class="px-6 pb-6">
-
-                <div class="flex justify-end">
-
-                    <div class="w-full max-w-sm">
-
-                        <table class="w-full border border-zinc-300">
-
-                            <tbody>
-
-                                <tr class="border-b">
-
-                                    <td class="px-4 py-2 text-sm font-medium">
-
-                                        Room Rent
-
-                                    </td>
-
-                                    <td class="px-4 py-2 text-right">
-
-                                        ₹{{ number_format($roomRent, 2) }}
-
-                                    </td>
-
-                                </tr>
-
-                                <tr class="border-b">
-
-                                    <td class="px-4 py-2 text-sm font-medium">
-
-                                        Services
-
-                                    </td>
-
-                                    <td class="px-4 py-2 text-right">
-
-                                        ₹{{ number_format($chargeable, 2) }}
-
-                                    </td>
-
-                                </tr>
-
-                                <tr class="border-b bg-zinc-50">
-
-                                    <td class="px-4 py-2 font-semibold">
-
-                                        Subtotal
-
-                                    </td>
-
-                                    <td class="px-4 py-2 text-right font-semibold">
-
-                                        ₹{{ number_format($subtotal, 2) }}
-
-                                    </td>
-
-                                </tr>
-
-                                <tr class="border-b">
-
-                                    <td class="px-4 py-2">
-
-                                        GST (5%)
-
-                                    </td>
-
-                                    <td class="px-4 py-2 text-right">
-
-                                        ₹{{ number_format($gst, 2) }}
-
-                                    </td>
-
-                                </tr>
-
-                                <tr class="bg-indigo-600 text-white">
-
-                                    <td class="px-4 py-3 text-lg font-bold">
-
-                                        Grand Total
-
-                                    </td>
-
-                                    <td class="px-4 py-3 text-right text-lg font-bold">
-
-                                        ₹{{ number_format($grandTotal, 2) }}
-
-                                    </td>
-
-                                </tr>
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Footer -->
-
-            <div class="border-t border-zinc-300 px-6 py-5">
-
-                <div class="grid grid-cols-2 gap-8">
-
-                    <div>
-
-                        <h3 class="font-semibold text-zinc-800 mb-2">
-
-                            Notes
-
-                        </h3>
-
-                        <ul class="text-xs text-zinc-600 leading-6">
-
-                            <li>• Thank you for choosing Hotel Holy House.</li>
-
-                            <li>• Complimentary services are not charged.</li>
-
-                            <li>• GST included as applicable.</li>
-
-                            <li>• Please preserve this invoice for future reference.</li>
-
-                        </ul>
-
-                    </div>
-
-                    <div class="text-right">
-
-                        <div class="h-14"></div>
-
-                        <div class="inline-block border-t border-zinc-400 pt-2 w-44 text-center text-sm">
-
-                            Authorized Signatory
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Action Buttons -->
-
-        <div class="flex justify-end gap-3 mt-5 print:hidden">
-
-            <a href="{{ route('dashboard.accounts.invoices') }}"
-                class="px-5 py-2.5 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-100">
-
-                <i class="fa-solid fa-arrow-left mr-2"></i>
-
-                Back
-
-            </a>
-
-            <button onclick="window.print()" class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white">
-
-                <i class="fa-solid fa-print mr-2"></i>
-
-                Print
-
-            </button>
-
-            <button class="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white">
-
-                <i class="fa-solid fa-file-pdf mr-2"></i>
-
-                Download PDF
-
-            </button>
-
-        </div>
-
-    </div> --}}
-
     <div class="max-w-4xl mx-auto">
 
         <div class="overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm">
 
             <!-- ===========================
-                 HEADER
-            ============================ -->
+                                     HEADER
+                                ============================ -->
 
             <div class="border-b border-zinc-300 px-6 py-5">
 
                 <div class="text-center">
 
+                    <!-- Logo -->
+                    <div class="flex justify-center mb-4">
+
+                        <img src="{{ asset('images/logo.png') }}" alt="Hotel Holy House Logo" class="h-20 w-auto">
+
+                    </div>
+
+                    <!-- Hotel Name -->
                     <h1 class="text-3xl font-bold uppercase tracking-wide text-zinc-900">
                         Hotel Holy House
                     </h1>
@@ -531,8 +63,8 @@
             </div>
 
             <!-- ===========================
-                 CUSTOMER & INVOICE
-            ============================ -->
+                                     CUSTOMER & INVOICE
+                                ============================ -->
 
             <div class="grid grid-cols-2 gap-6 border-b border-zinc-300 bg-zinc-50 px-6 py-4">
 
@@ -552,13 +84,29 @@
 
                             <td class="w-24 py-1 text-zinc-500">
 
-                                Guest
+                                Guest Name
 
                             </td>
 
                             <td class="font-medium text-zinc-800">
 
                                 {{ $guest?->guest_name }}
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="w-24 py-1 align-top text-zinc-500">
+
+                                Bill To
+
+                            </td>
+
+                            <td class="font-medium text-zinc-800">
+
+                                {{ $booking->bill_to ?: 'Hotel Holy House Near Artemis Hospital, Sector-51, Gurugram, Haryana - 122001, India' }}
 
                             </td>
 
@@ -584,7 +132,7 @@
 
                             <td class="py-1 text-zinc-500">
 
-                                Nationality
+                                Address
 
                             </td>
 
@@ -592,6 +140,33 @@
 
                                 {{ $guest?->nationality }}
 
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="py-1 text-zinc-500">
+
+                                HSN Code
+
+                            </td>
+
+                            <td>
+
+                                {{ $booking->hsn_code }}
+
+                            </td>
+
+                        </tr>
+                        <tr>
+
+                            <td class="py-1 text-zinc-500">
+                                Bill To GSTIN
+                            </td>
+
+                            <td>
+                                {{ $booking->bill_to_gstin }}
                             </td>
 
                         </tr>
@@ -663,6 +238,18 @@
                         <tr>
 
                             <td class="py-1 text-zinc-500">
+                                Rate Type
+                            </td>
+
+                            <td>
+                                {{ $booking->rate_type }}
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="py-1 text-zinc-500">
 
                                 Check In
 
@@ -699,8 +286,8 @@
             </div>
 
             <!-- ===========================
-                 CHARGES TABLE
-            ============================ -->
+                                     CHARGES TABLE
+                                ============================ -->
 
             <div class="p-5">
 
@@ -804,8 +391,8 @@
 
             </div>
             <!-- ===========================
-                 TOTALS
-            ============================ -->
+                                     TOTALS
+                                ============================ -->
 
             <div class="border-t border-zinc-300 px-5 py-4">
 
@@ -884,8 +471,8 @@
             </div>
 
             <!-- ===========================
-                 AMOUNT IN WORDS
-            ============================ -->
+                                     AMOUNT IN WORDS
+                                ============================ -->
 
             <div class="border-t border-zinc-300 px-5 py-4">
 
@@ -904,8 +491,8 @@
             </div>
 
             <!-- ===========================
-                 NOTES & SIGNATURE
-            ============================ -->
+                                     NOTES & SIGNATURE
+                                ============================ -->
 
             <div class="grid grid-cols-2 gap-8 border-t border-zinc-300 px-5 py-5">
 
@@ -954,8 +541,8 @@
         </div>
 
         <!-- ===========================
-             ACTION BUTTONS
-        ============================ -->
+                                 ACTION BUTTONS
+                            ============================ -->
 
         <div class="mt-5 flex justify-end gap-3 print:hidden">
 
@@ -975,8 +562,7 @@
 
             </button>
 
-            <a href=""
-                class="rounded-md bg-zinc-700 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-900">
+            <a href="" class="rounded-md bg-zinc-700 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-900">
 
                 <i class="fa-solid fa-file-pdf mr-2"></i>
 

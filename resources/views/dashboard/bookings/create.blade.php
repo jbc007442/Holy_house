@@ -115,6 +115,7 @@
 
             <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm mt-6">
 
+                <!-- Header -->
                 <div class="px-6 py-4 border-b border-zinc-200 flex items-center gap-3">
 
                     <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
@@ -127,15 +128,16 @@
                         </h2>
 
                         <p class="text-sm text-zinc-500">
-                            Select an available room.
+                            Select building, floor and available room.
                         </p>
                     </div>
 
                 </div>
 
+                <!-- Body -->
                 <div class="p-6">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <!-- Building -->
                         <div>
@@ -154,6 +156,22 @@
                                         {{ $building->name }}
                                     </option>
                                 @endforeach
+
+                            </select>
+
+                        </div>
+
+                        <!-- Floor -->
+                        <div>
+
+                            <label class="block mb-2 text-sm font-medium">
+                                Floor
+                            </label>
+
+                            <select id="floor" name="floor"
+                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+
+                                <option value="">Select Floor</option>
 
                             </select>
 
@@ -181,6 +199,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
 
+                        <!-- Rent -->
                         <div class="rounded-xl border border-zinc-200 p-5 bg-zinc-50">
 
                             <p class="text-sm text-zinc-500">
@@ -193,6 +212,7 @@
 
                         </div>
 
+                        <!-- Status -->
                         <div class="rounded-xl border border-zinc-200 p-5 bg-zinc-50">
 
                             <p class="text-sm text-zinc-500">
@@ -389,98 +409,212 @@
 @endsection
 
 @push('scripts')
-    <script>
-        $('#building_id').on('change', function() {
+<script>
+$(function () {
 
-            let buildingId = $(this).val();
+    /*
+    |--------------------------------------------------------------------------
+    | Building -> Floors
+    |--------------------------------------------------------------------------
+    */
 
-            $('#room_id').html('<option value="">Loading...</option>');
+    function loadFloors() {
 
-            if (!buildingId) {
-                $('#room_id').html('<option value="">Select Room</option>');
-                return;
-            }
+        let buildingId = $('#building_id').val();
 
-            $.ajax({
-                url: "{{ route('dashboard.bookings.rooms', ':id') }}".replace(':id', buildingId),
-                type: "GET",
-                dataType: "json",
+        $('#floor').html('<option value="">Loading...</option>');
+        $('#room_id').html('<option value="">Select Room</option>');
 
-                success: function(rooms) {
+        if (!buildingId) {
+            $('#floor').html('<option value="">Select Floor</option>');
+            return;
+        }
 
-                    let html = '<option value="">Select Room</option>';
+        $.ajax({
+            url: "{{ route('dashboard.property.buildings.floors', ':id') }}".replace(':id', buildingId),
+            type: "GET",
+            dataType: "json",
 
-                    $.each(rooms, function(index, room) {
-                        html += `
-        <option
-            value="${room.id}"
-            data-rent="${room.base_price}"
-            data-status="${room.status}">
-            ${room.room_number}
-        </option>
-    `;
-                    });
+            success: function (floors) {
 
-                    $('#room_id').html(html);
-                },
+                let html = '<option value="">Select Floor</option>';
 
-                error: function() {
-                    $('#room_id').html('<option value="">No Rooms Found</option>');
-                }
-            });
+                $.each(floors, function (index, floor) {
 
-        });
+                    html += `
+                        <option value="${floor.name}">
+                            ${floor.name}
+                        </option>
+                    `;
 
+                });
 
-        $('#room_id').on('change', function() {
+                $('#floor').html(html);
 
-            let selected = $(this).find(':selected');
+            },
 
-            let rent = selected.data('rent') || 0;
-            let status = selected.data('status') || 'N/A';
+            error: function () {
 
-            // Update rent
-            $('#roomRent').text('₹' + rent);
-            $('input[name="room_rent"]').val(rent);
+                $('#floor').html('<option value="">No Floors Found</option>');
 
-            // Update status text
-            let badge = $('#roomStatus');
-
-            badge.text(status);
-
-            // Remove old colors
-            badge.removeClass(
-                'bg-green-100 text-green-700 bg-red-100 text-red-700 bg-yellow-100 text-yellow-700 bg-zinc-100 text-zinc-700'
-            );
-
-            // Apply new colors
-            if (status === 'available') {
-                badge.addClass('bg-green-100 text-green-700');
-            } else if (status === 'occupied') {
-                badge.addClass('bg-red-100 text-red-700');
-            } else if (status === 'maintenance') {
-                badge.addClass('bg-yellow-100 text-yellow-700');
-            } else {
-                badge.addClass('bg-zinc-100 text-zinc-700');
             }
 
         });
 
+    }
 
-        document.addEventListener('DOMContentLoaded', function() {
+    /*
+    |--------------------------------------------------------------------------
+    | Floor -> Rooms
+    |--------------------------------------------------------------------------
+    */
 
-            const guestCount = document.getElementById('guestCount');
-            const guestContainer = document.getElementById('guestContainer');
+    function loadRooms() {
 
-            function renderGuests() {
+        let buildingId = $('#building_id').val();
+        let floor = $('#floor').val();
 
-                guestContainer.innerHTML = '';
+        $('#room_id').html('<option value="">Loading...</option>');
 
-                let total = parseInt(guestCount.value);
+        if (!buildingId || !floor) {
 
-                for (let i = 1; i <= total; i++) {
+            $('#room_id').html('<option value="">Select Room</option>');
 
-                    guestContainer.innerHTML += `
+            return;
+
+        }
+
+        $.ajax({
+
+            url: "{{ route('dashboard.bookings.rooms', ':id') }}".replace(':id', buildingId),
+
+            type: "GET",
+
+            data: {
+                floor: floor
+            },
+
+            dataType: "json",
+
+            success: function (rooms) {
+                console.log(rooms);
+
+                let html = '<option value="">Select Room</option>';
+
+                $.each(rooms, function (index, room) {
+
+                    html += `
+                        <option
+                            value="${room.id}"
+                            data-rent="${room.base_price}"
+                            data-status="${room.status}">
+                            ${room.room_number}
+                        </option>
+                    `;
+
+                });
+
+                $('#room_id').html(html);
+
+            },
+
+            error: function () {
+
+                $('#room_id').html('<option value="">No Rooms Found</option>');
+
+            }
+
+        });
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Events
+    |--------------------------------------------------------------------------
+    */
+
+    $('#building_id').on('change', function () {
+
+        $('#roomRent').text('₹0');
+
+        $('#roomStatus')
+            .text('Select Room')
+            .removeClass('bg-green-100 text-green-700 bg-red-100 text-red-700 bg-yellow-100 text-yellow-700')
+            .addClass('bg-zinc-100 text-zinc-700');
+
+        loadFloors();
+
+    });
+
+    $('#floor').on('change', function () {
+
+        loadRooms();
+
+    });
+
+    $('#room_id').on('change', function () {
+
+        let selected = $(this).find(':selected');
+
+        let rent = selected.data('rent') || 0;
+        let status = selected.data('status') || 'N/A';
+
+        $('#roomRent').text('₹' + rent);
+
+        $('input[name="room_rent"]').val(rent);
+
+        let badge = $('#roomStatus');
+
+        badge.text(status);
+
+        badge.removeClass(
+            'bg-green-100 text-green-700 bg-red-100 text-red-700 bg-yellow-100 text-yellow-700 bg-zinc-100 text-zinc-700'
+        );
+
+        if (status === 'available') {
+
+            badge.addClass('bg-green-100 text-green-700');
+
+        } else if (status === 'blocked') {
+
+            badge.addClass('bg-red-100 text-red-700');
+
+        } else if (status === 'maintenance') {
+
+            badge.addClass('bg-yellow-100 text-yellow-700');
+
+        } else {
+
+            badge.addClass('bg-zinc-100 text-zinc-700');
+
+        }
+
+    });
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Guest Form
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const guestCount = document.getElementById('guestCount');
+    const guestContainer = document.getElementById('guestContainer');
+
+    function renderGuests() {
+
+        guestContainer.innerHTML = '';
+
+        let total = parseInt(guestCount.value);
+
+        for (let i = 1; i <= total; i++) {
+
+            guestContainer.innerHTML += `
                 <div class="border rounded-2xl p-5">
 
                     <h3 class="font-semibold text-zinc-800 mb-5">
@@ -542,36 +676,38 @@
                         </div>
 
                         <div>
-                           <label class="block mb-2 text-sm font-medium">
-                             Nationality
-                           </label>
+                            <label class="block mb-2 text-sm font-medium">
+                                Nationality
+                            </label>
 
-                          <input
-                              type="text"
-                              name="guests[${i}][nationality]"
-                              id="nationality_${i}"
-                              class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                            <input
+                                type="text"
+                                name="guests[${i}][nationality]"
+                                id="nationality_${i}"
+                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
                         </div>
 
                     </div>
 
                 </div>
             `;
-                }
+        }
 
-                for (let i = 1; i <= total; i++) {
-                    $(`#nationality_${i}`).countrySelect({
-                        defaultCountry: "in",
-                        preferredCountries: ['in', 'us', 'gb', 'ae']
-                    });
-                }
+        for (let i = 1; i <= total; i++) {
 
-            }
+            $(`#nationality_${i}`).countrySelect({
+                defaultCountry: "in",
+                preferredCountries: ['in', 'us', 'gb', 'ae']
+            });
 
-            renderGuests();
+        }
 
-            guestCount.addEventListener('change', renderGuests);
+    }
 
-        });
-    </script>
+    renderGuests();
+
+    guestCount.addEventListener('change', renderGuests);
+
+});
+</script>
 @endpush
