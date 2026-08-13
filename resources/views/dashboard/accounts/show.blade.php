@@ -13,8 +13,8 @@
         <div class="overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm">
 
             <!-- ===========================
-                                     HEADER
-                                ============================ -->
+                                                                                         HEADER
+                                                                                    ============================ -->
 
             <div class="border-b border-zinc-300 px-6 py-5">
 
@@ -63,8 +63,8 @@
             </div>
 
             <!-- ===========================
-                                     CUSTOMER & INVOICE
-                                ============================ -->
+                                                                                         CUSTOMER & INVOICE
+                                                                                    ============================ -->
 
             <div class="grid grid-cols-2 gap-6 border-b border-zinc-300 bg-zinc-50 px-6 py-4">
 
@@ -139,6 +139,22 @@
                             <td>
 
                                 {{ $guest?->nationality }}
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="py-1 text-zinc-500">
+
+                                State
+
+                            </td>
+
+                            <td>
+
+                                {{ $guest?->state }}
 
                             </td>
 
@@ -286,8 +302,8 @@
             </div>
 
             <!-- ===========================
-                                     CHARGES TABLE
-                                ============================ -->
+                                                                                         CHARGES TABLE
+                                                                                    ============================ -->
 
             <div class="p-5">
 
@@ -298,15 +314,15 @@
                         <tr class="bg-zinc-200 text-zinc-700 uppercase">
 
                             <th class="w-16 border-b border-zinc-300 px-3 py-2 text-left">
-
-                                Qty
-
+                                S.No
                             </th>
 
                             <th class="border-b border-zinc-300 px-3 py-2 text-left">
-
                                 Description
+                            </th>
 
+                            <th class="w-20 border-b border-zinc-300 px-3 py-2 text-center">
+                                Qty
                             </th>
 
                             <th class="w-28 border-b border-zinc-300 px-3 py-2 text-right">
@@ -330,56 +346,57 @@
                         <tr>
 
                             <td class="border-b border-zinc-200 px-3 py-2">
-
                                 1
-
                             </td>
 
                             <td class="border-b border-zinc-200 px-3 py-2">
-
                                 Room Rent
+                            </td>
 
+                            <td class="border-b border-zinc-200 px-3 py-2 text-center">
+                                {{ max(1, \Carbon\Carbon::parse($booking->check_in)->diffInDays(\Carbon\Carbon::parse($booking->check_out))) }}
                             </td>
 
                             <td class="border-b border-zinc-200 px-3 py-2 text-right">
-
                                 ₹{{ number_format($roomRent, 2) }}
-
                             </td>
 
+                            @php
+                                $stayDays = max(
+                                    1,
+                                    \Carbon\Carbon::parse($booking->check_in)->diffInDays(
+                                        \Carbon\Carbon::parse($booking->check_out),
+                                    ),
+                                );
+                            @endphp
+
                             <td class="border-b border-zinc-200 px-3 py-2 text-right font-medium">
-
-                                ₹{{ number_format($roomRent, 2) }}
-
+                                ₹{{ number_format($roomRent * $stayDays, 2) }}
                             </td>
 
                         </tr>
 
-                        @foreach ($booking->services->where('type', 'chargeable') as $service)
+                        @foreach ($booking->services->where('type', 'chargeable')->values() as $index => $service)
                             <tr>
 
                                 <td class="border-b border-zinc-200 px-3 py-2">
-
-                                    {{ $service->quantity }}
-
+                                    {{ $index + 2 }}
                                 </td>
 
                                 <td class="border-b border-zinc-200 px-3 py-2">
-
                                     {{ $service->service_name }}
+                                </td>
 
+                                <td class="border-b border-zinc-200 px-3 py-2 text-center">
+                                    {{ $service->quantity }}
                                 </td>
 
                                 <td class="border-b border-zinc-200 px-3 py-2 text-right">
-
                                     ₹{{ number_format($service->unit_price, 2) }}
-
                                 </td>
 
                                 <td class="border-b border-zinc-200 px-3 py-2 text-right">
-
                                     ₹{{ number_format($service->total_amount, 2) }}
-
                                 </td>
 
                             </tr>
@@ -391,77 +408,99 @@
 
             </div>
             <!-- ===========================
-                                     TOTALS
-                                ============================ -->
+                                                    TOTALS
+                                        ============================ -->
+
+            @php
+                $stayDays = max(
+                    1,
+                    \Carbon\Carbon::parse($booking->check_in)->diffInDays(\Carbon\Carbon::parse($booking->check_out)),
+                );
+
+                $roomRentTotal = $roomRent * $stayDays;
+
+                $serviceTotal = $booking->services->where('type', 'chargeable')->sum('total_amount');
+
+                $discount = $booking->discount ?? 0;
+
+                $subtotal = $roomRentTotal + $serviceTotal - $discount;
+
+                $guestState = trim($booking->guests->first()?->state ?? '');
+
+                if (strcasecmp($guestState, 'Haryana') === 0) {
+                    $cgstRate = 2.5;
+                    $sgstRate = 2.5;
+                    $igstRate = 0;
+                } else {
+                    $cgstRate = 0;
+                    $sgstRate = 0;
+                    $igstRate = 5;
+                }
+
+                $cgst = round($subtotal * ($cgstRate / 100), 2);
+                $sgst = round($subtotal * ($sgstRate / 100), 2);
+                $igst = round($subtotal * ($igstRate / 100), 2);
+
+                $grandTotal = round($subtotal + $cgst + $sgst + $igst, 2);
+            @endphp
 
             <div class="border-t border-zinc-300 px-5 py-4">
 
                 <div class="ml-auto w-full max-w-sm">
 
                     <table class="w-full text-xs">
-
                         <tr>
-
                             <td class="py-2 text-zinc-600">
-
-                                Sub Total
-
-                            </td>
-
-                            <td class="py-2 text-right font-medium">
-
-                                ₹{{ number_format($subtotal, 2) }}
-
-                            </td>
-
-                        </tr>
-
-                        <tr>
-
-                            <td class="py-2 text-zinc-600">
-
                                 Discount
-
                             </td>
-
                             <td class="py-2 text-right">
-
-                                - ₹{{ number_format(0, 2) }}
-
+                                - ₹{{ number_format($discount, 2) }}
                             </td>
-
                         </tr>
 
                         <tr>
-
                             <td class="py-2 text-zinc-600">
-
-                                GST
-
+                                Sub Total
                             </td>
+                            <td class="py-2 text-right font-medium">
+                                ₹{{ number_format($subtotal, 2) }}
+                            </td>
+                        </tr>
 
+                        <tr>
+                            <td class="py-2 text-zinc-600">
+                                CGST ({{ $cgstRate }}%)
+                            </td>
                             <td class="py-2 text-right">
-
-                                ₹{{ number_format($gst, 2) }}
-
+                                ₹{{ number_format($cgst, 2) }}
                             </td>
+                        </tr>
 
+                        <tr>
+                            <td class="py-2 text-zinc-600">
+                                SGST ({{ $sgstRate }}%)
+                            </td>
+                            <td class="py-2 text-right">
+                                ₹{{ number_format($sgst, 2) }}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="py-2 text-zinc-600">
+                                IGST ({{ $igstRate }}%)
+                            </td>
+                            <td class="py-2 text-right">
+                                ₹{{ number_format($igst, 2) }}
+                            </td>
                         </tr>
 
                         <tr class="border-t border-zinc-300 bg-zinc-100">
-
                             <td class="py-3 text-sm font-bold uppercase">
-
                                 Grand Total
-
                             </td>
-
                             <td class="py-3 text-right text-sm font-bold">
-
                                 ₹{{ number_format($grandTotal, 2) }}
-
                             </td>
-
                         </tr>
 
                     </table>
@@ -471,28 +510,36 @@
             </div>
 
             <!-- ===========================
-                                     AMOUNT IN WORDS
-                                ============================ -->
+                                                                                         AMOUNT IN WORDS
+                                                                                    ============================ -->
 
             <div class="border-t border-zinc-300 px-5 py-4">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h4 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                            Amount in Words
+                        </h4>
 
-                <h4 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                        <p class="mt-2 text-sm font-semibold text-zinc-800 leading-6">
+                            {{ ucfirst(\Illuminate\Support\Number::spell((int) round($grandTotal))) }} Rupees Only
+                        </p>
+                    </div>
 
-                    Amount in Words
+                    <div class="text-right">
+                        <p class="text-xs uppercase tracking-wide text-zinc-500">
+                            Total Amount
+                        </p>
 
-                </h4>
-
-                <p class="mt-2 text-sm font-medium text-zinc-800">
-
-                    ₹{{ number_format($grandTotal, 2) }}
-
-                </p>
-
+                        <p class="mt-2 text-lg font-bold text-zinc-900">
+                            ₹{{ number_format($grandTotal, 2) }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <!-- ===========================
-                                     NOTES & SIGNATURE
-                                ============================ -->
+                                                                                         NOTES & SIGNATURE
+                                                                                    ============================ -->
 
             <div class="grid grid-cols-2 gap-8 border-t border-zinc-300 px-5 py-5">
 
@@ -541,8 +588,8 @@
         </div>
 
         <!-- ===========================
-                                 ACTION BUTTONS
-                            ============================ -->
+                                                                                     ACTION BUTTONS
+                                                                                ============================ -->
 
         <div class="mt-5 flex justify-end gap-3 print:hidden">
 

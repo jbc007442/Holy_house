@@ -93,32 +93,29 @@ class InvoiceController extends Controller
 
             'total_invoice' => $allInvoices->count(),
 
-            'revenue' => $allInvoices->sum(function ($invoice) {
-
-                $booking = $invoice->booking;
-
-                $roomRent = $booking->room_rent;
-
-                $chargeable = $booking->services
-                    ->where('type', 'chargeable')
-                    ->sum('total_amount');
-
-                $subtotal = $roomRent + $chargeable;
-
-                return $subtotal + ($subtotal * 0.05);
-            }),
+            'revenue' => $allInvoices->sum('grand_total'),
 
             'tax' => $allInvoices->sum(function ($invoice) {
 
                 $booking = $invoice->booking;
 
-                $subtotal =
-                    $booking->room_rent +
-                    $booking->services
+                $stayDays = max(
+                    1,
+                    \Carbon\Carbon::parse($booking->check_in)
+                        ->diffInDays(\Carbon\Carbon::parse($booking->check_out))
+                );
+
+                $roomRentTotal = $booking->room_rent * $stayDays;
+
+                $serviceTotal = $booking->services
                     ->where('type', 'chargeable')
                     ->sum('total_amount');
 
-                return $subtotal * 0.05;
+                $discount = $booking->discount ?? 0;
+
+                $subtotal = $roomRentTotal + $serviceTotal - $discount;
+
+                return round($invoice->grand_total - $subtotal, 2);
             }),
 
             'this_month' => $allInvoices
@@ -191,9 +188,9 @@ class InvoiceController extends Controller
 
         $subtotal = $roomRent + $chargeable;
 
-        $gst = $subtotal * 0.05;
+        $gst = $invoice->grand_total - $subtotal;
 
-        $grandTotal = $subtotal + $gst;
+        $grandTotal = $invoice->grand_total;
 
         return view('dashboard.accounts.show', compact(
             'invoice',

@@ -104,23 +104,7 @@ function renderTable(invoices) {
     invoices.forEach(function (invoice) {
         const booking = invoice.booking ?? {};
 
-        const roomRent = Number(booking.room_rent ?? 0);
-
-        let chargeable = 0;
-
-        if (booking.services) {
-            booking.services.forEach(function (service) {
-                if (service.type === "chargeable") {
-                    chargeable += Number(service.total_amount);
-                }
-            });
-        }
-
-        const subtotal = roomRent + chargeable;
-
-        const gst = subtotal * 0.05;
-
-        const grandTotal = subtotal + gst;
+        const grandTotal = Number(invoice.grand_total ?? 0);
 
         const guest =
             booking.guests && booking.guests.length

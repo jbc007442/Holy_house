@@ -104,6 +104,44 @@
 
                         </div>
 
+                        <!-- State -->
+                        <div class="flex justify-between border-b pb-2">
+
+                            <span class="text-zinc-500 font-medium">
+                                State
+                            </span>
+
+                            <span class="font-semibold text-zinc-800">
+                                {{ $booking->guests->first()?->state ?? '-' }}
+                            </span>
+
+                        </div>
+
+                        <!-- Discount -->
+                        <div class="flex justify-between items-center border-b pb-2">
+
+                            <span class="text-zinc-500 font-medium">
+                                Discount
+                            </span>
+
+                            <input type="number" name="discount" value="{{ old('discount', $booking->discount ?? 0) }}"
+                                min="0" step="0.01" placeholder="0.00"
+                                class="w-44 rounded-lg border border-zinc-300 px-3 py-2 text-right">
+
+                        </div>
+
+                        <!-- Discount Remark -->
+                        <div class="flex justify-between items-start border-b pb-2">
+
+                            <span class="text-zinc-500 font-medium pt-2">
+                                Discount Remark
+                            </span>
+
+                            <textarea name="discount_remark" rows="3" placeholder="Enter discount remark..."
+                                class="w-64 rounded-lg border border-zinc-300 px-3 py-2 resize-none">{{ old('discount_remark', $booking->discount_remark) }}</textarea>
+
+                        </div>
+
                         <!-- Rate Type -->
                         <div class="flex justify-between items-center border-b pb-2">
 
@@ -333,21 +371,19 @@
 
                 {{-- Add Service --}}
                 <form action="{{ route('dashboard.bookings.services.store', $booking) }}" method="POST">
-
                     @csrf
 
                     <tr class="border-t bg-amber-50">
 
+                        <!-- Service -->
                         <td class="px-4 py-3">
 
-                            <input type="text" name="service_name" id="service_name" placeholder="Enter service name"
-                                class="w-full rounded-lg border-zinc-300">
+                            <input type="text" name="service_name" id="add_service_name"
+                                placeholder="Enter service name" class="hidden w-full rounded-lg border-zinc-300">
 
-                            <select name="item_id" id="item_id" class="hidden w-full rounded-lg border-zinc-300">
+                            <select name="item_id" id="add_item_id" class="w-full rounded-lg border-zinc-300">
 
-                                <option value="">
-                                    Select Item
-                                </option>
+                                <option value="">Select Item</option>
 
                                 @foreach ($items as $item)
                                     <option value="{{ $item->id }}">
@@ -359,11 +395,12 @@
 
                         </td>
 
+                        <!-- Type -->
                         <td class="px-4 py-3">
 
-                            <select name="type" id="service_type" class="w-full rounded-lg border-zinc-300">
+                            <select name="type" id="add_service_type" class="w-full rounded-lg border-zinc-300">
 
-                                <option value="chargeable">
+                                <option value="chargeable" selected>
                                     Chargeable
                                 </option>
 
@@ -371,10 +408,15 @@
                                     Complimentary
                                 </option>
 
+                                <option value="other">
+                                    Other
+                                </option>
+
                             </select>
 
                         </td>
 
+                        <!-- Qty -->
                         <td class="px-4 py-3">
 
                             <input type="number" name="quantity" min="1" value="1"
@@ -382,17 +424,16 @@
 
                         </td>
 
+                        <!-- Rate -->
                         <td class="px-4 py-3">
 
-                            <input type="number" name="unit_price" step="0.01" value="0"
+                            <input type="number" id="add_unit_price" name="unit_price" step="0.01" value="0"
                                 class="w-full rounded-lg border-zinc-300 text-right">
 
                         </td>
 
                         <td class="px-4 py-3 text-right font-semibold">
-
                             Auto
-
                         </td>
 
                         <td class="px-4 py-3 text-center">
@@ -544,38 +585,54 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            const type = document.getElementById('service_type');
-            const serviceInput = document.getElementById('service_name');
-            const itemSelect = document.getElementById('item_id');
-            const rate = document.querySelector('input[name="unit_price"]');
+            const type = document.getElementById('add_service_type');
+            const serviceInput = document.getElementById('add_service_name');
+            const itemSelect = document.getElementById('add_item_id');
+            const rate = document.getElementById('add_unit_price');
 
             function toggleFields() {
 
-                if (type.value === 'complimentary') {
+                switch (type.value) {
 
-                    // Show Item Dropdown
-                    serviceInput.classList.add('hidden');
-                    itemSelect.classList.remove('hidden');
+                    case 'chargeable':
 
-                    serviceInput.value = '';
+                        // Show item dropdown
+                        itemSelect.classList.remove('hidden');
+                        serviceInput.classList.add('hidden');
 
-                    // Complimentary => Rate = 0
-                    rate.value = 0;
-                    rate.readOnly = true;
-                    rate.classList.add('bg-zinc-100', 'cursor-not-allowed');
+                        serviceInput.value = '';
 
-                } else {
+                        rate.readOnly = false;
+                        rate.classList.remove('bg-zinc-100', 'cursor-not-allowed');
 
-                    // Show Service Name
-                    itemSelect.classList.add('hidden');
-                    serviceInput.classList.remove('hidden');
+                        break;
 
-                    itemSelect.value = '';
+                    case 'complimentary':
 
-                    // Chargeable => Editable Rate
-                    rate.readOnly = false;
-                    rate.classList.remove('bg-zinc-100', 'cursor-not-allowed');
+                        // Show item dropdown
+                        itemSelect.classList.remove('hidden');
+                        serviceInput.classList.add('hidden');
 
+                        serviceInput.value = '';
+
+                        rate.value = 0;
+                        rate.readOnly = true;
+                        rate.classList.add('bg-zinc-100', 'cursor-not-allowed');
+
+                        break;
+
+                    case 'other':
+
+                        // Show manual input
+                        itemSelect.classList.add('hidden');
+                        itemSelect.value = '';
+
+                        serviceInput.classList.remove('hidden');
+
+                        rate.readOnly = false;
+                        rate.classList.remove('bg-zinc-100', 'cursor-not-allowed');
+
+                        break;
                 }
 
             }

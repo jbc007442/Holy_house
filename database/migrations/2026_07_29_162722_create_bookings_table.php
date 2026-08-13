@@ -77,6 +77,11 @@ return new class extends Migration
 
             $table->string('hsn_code')->default('998552');
 
+            $table->decimal('discount', 10, 2)->default(0);
+
+            // Remarks
+            $table->text('discount_remark')->nullable();
+
             // Audit
 
             $table->foreignId('created_by')

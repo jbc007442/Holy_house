@@ -74,6 +74,7 @@ class BookingController extends Controller
             'guests'       => 'required|array|min:1',
             'guests.*.guest_name' => 'required|string|max:255',
             'guests.*.mobile'     => 'nullable|string|max:20',
+            'guests.*.state'      => 'nullable|string|max:100',
         ]);
 
         DB::beginTransaction();
@@ -129,6 +130,8 @@ class BookingController extends Controller
                     'id_number'   => $guest['id_number'] ?? null,
 
                     'nationality' => $guest['nationality'] ?? null,
+                    
+                    'state'       => $guest['state'] ?? null,
 
                     'is_primary'  => $index === 0,
 
@@ -229,6 +232,7 @@ class BookingController extends Controller
             'guests'       => 'required|array|min:1',
             'guests.*.guest_name' => 'required|string|max:255',
             'guests.*.mobile'     => 'nullable|string|max:20',
+            'guests.*.state'      => 'nullable|string|max:100',
         ]);
 
         DB::beginTransaction();
@@ -287,6 +291,8 @@ class BookingController extends Controller
                     'id_number'   => $guest['id_number'] ?? null,
 
                     'nationality' => $guest['nationality'] ?? null,
+
+                    'state'       => $guest['state'] ?? null,
 
                     'is_primary'  => $index === 0,
 
@@ -366,21 +372,26 @@ class BookingController extends Controller
     /**
      * Update Invoice Details
      */
+
     public function updateInvoiceDetails(Request $request, Booking $booking)
     {
         $validated = $request->validate([
-            'rate_type'     => 'nullable|in:EP,CP,MAP',
-            'bill_to'       => 'nullable|string|max:255',
-            'bill_to_gstin' => 'nullable|string|max:50',
-            'hsn_code'      => 'nullable|string|max:20',
+            'rate_type'        => 'nullable|in:EP,CP,MAP',
+            'bill_to'          => 'nullable|string|max:255',
+            'bill_to_gstin'    => 'nullable|string|max:50',
+            'hsn_code'         => 'nullable|string|max:20',
+            'discount'         => 'nullable|numeric|min:0',
+            'discount_remark'  => 'nullable|string|max:1000',
         ]);
 
         $booking->update([
-            'rate_type'     => $validated['rate_type'],
-            'bill_to'       => $validated['bill_to'],
-            'bill_to_gstin' => $validated['bill_to_gstin'],
-            'hsn_code'      => $validated['hsn_code'] ?: '998552',
-            'updated_by'    => auth()->id(),
+            'rate_type'        => $validated['rate_type'] ?? null,
+            'bill_to'          => $validated['bill_to'] ?? null,
+            'bill_to_gstin'    => $validated['bill_to_gstin'] ?? null,
+            'hsn_code'         => $validated['hsn_code'] ?: '998552',
+            'discount'         => $validated['discount'] ?? 0,
+            'discount_remark'  => $validated['discount_remark'] ?? null,
+            'updated_by'       => auth()->id(),
         ]);
 
         return back()->with('success', 'Invoice details updated successfully.');
@@ -389,12 +400,52 @@ class BookingController extends Controller
     /**
      * Check Out Guest
      */
-    
+
+    // public function checkout(string $id)
+    // {
+    //     DB::transaction(function () use ($id) {
+
+    //         $booking = Booking::with('room')->findOrFail($id);
+
+    //         $booking->update([
+    //             'status'    => 'checked_out',
+    //             'check_out' => now(),
+    //         ]);
+
+    //         $booking->room->update([
+    //             'status' => 'available',
+    //         ]);
+
+    //         // Generate Invoice
+    //         Invoice::firstOrCreate(
+    //             [
+    //                 'booking_id' => $booking->id,
+    //             ],
+    //             [
+    //                 'invoice_no' => 'INV-' . str_pad(
+    //                     Invoice::max('id') + 1,
+    //                     6,
+    //                     '0',
+    //                     STR_PAD_LEFT
+    //                 ),
+    //             ]
+    //         );
+    //     });
+
+    //     return redirect()
+    //         ->route('dashboard.bookings.current-stays')
+    //         ->with('success', 'Guest checked out successfully.');
+    // }
+
     public function checkout(string $id)
     {
         DB::transaction(function () use ($id) {
 
-            $booking = Booking::with('room')->findOrFail($id);
+            $booking = Booking::with([
+                'room',
+                'guests',
+                'services'
+            ])->findOrFail($id);
 
             $booking->update([
                 'status'    => 'checked_out',
@@ -404,6 +455,47 @@ class BookingController extends Controller
             $booking->room->update([
                 'status' => 'available',
             ]);
+
+            // Stay Days
+            $stayDays = max(
+                1,
+                \Carbon\Carbon::parse($booking->check_in)
+                    ->diffInDays(\Carbon\Carbon::parse($booking->check_out))
+            );
+
+            // Room Total
+            $roomRentTotal = $booking->room_rent * $stayDays;
+
+            // Chargeable Services
+            $serviceTotal = $booking->services
+                ->where('type', 'chargeable')
+                ->sum('total_amount');
+
+            // Discount
+            $discount = $booking->discount ?? 0;
+
+            // Sub Total
+            $subtotal = $roomRentTotal + $serviceTotal - $discount;
+
+            // GST
+            $guestState = trim($booking->guests->first()?->state ?? '');
+
+            if (strcasecmp($guestState, 'Haryana') === 0) {
+
+                $cgst = round($subtotal * 0.025, 2);
+                $sgst = round($subtotal * 0.025, 2);
+                $igst = 0;
+            } else {
+
+                $cgst = 0;
+                $sgst = 0;
+                $igst = round($subtotal * 0.05, 2);
+            }
+
+            $grandTotal = round(
+                $subtotal + $cgst + $sgst + $igst,
+                2
+            );
 
             // Generate Invoice
             Invoice::firstOrCreate(
@@ -417,6 +509,11 @@ class BookingController extends Controller
                         '0',
                         STR_PAD_LEFT
                     ),
+
+                    'grand_total' => $grandTotal,
+
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
                 ]
             );
         });
@@ -725,7 +822,7 @@ class BookingController extends Controller
     public function storeService(Request $request, Booking $booking)
     {
         $request->validate([
-            'type'         => 'required|in:chargeable,complimentary',
+            'type'         => 'required|in:chargeable,complimentary,other',
             'service_name' => 'nullable|string|max:255',
             'item_id'      => 'nullable|exists:items,id',
             'quantity'     => 'required|integer|min:1',
@@ -733,19 +830,14 @@ class BookingController extends Controller
             'remarks'      => 'nullable|string',
         ]);
 
-        // Chargeable validation
-        if (
-            $request->type === 'chargeable' &&
-            empty($request->service_name)
-        ) {
-            return back()->withErrors([
-                'service_name' => 'Service name is required.'
-            ])->withInput();
-        }
+        // "Other" is stored as "chargeable"
+        $type = $request->type === 'other'
+            ? 'chargeable'
+            : $request->type;
 
-        // Complimentary validation
+        // Chargeable & Complimentary require an item
         if (
-            $request->type === 'complimentary' &&
+            $request->type !== 'other' &&
             empty($request->item_id)
         ) {
             return back()->withErrors([
@@ -753,21 +845,31 @@ class BookingController extends Controller
             ])->withInput();
         }
 
-        // Default values
-        $serviceName = $request->service_name;
+        // Other requires manual service name
+        if (
+            $request->type === 'other' &&
+            empty($request->service_name)
+        ) {
+            return back()->withErrors([
+                'service_name' => 'Service name is required.'
+            ])->withInput();
+        }
+
         $itemId = null;
+        $serviceName = $request->service_name;
         $unitPrice = $request->unit_price;
 
-        // Complimentary Service
-        if ($request->type === 'complimentary') {
+        // Chargeable & Complimentary use Item Master
+        if ($request->type !== 'other') {
 
             $item = Item::findOrFail($request->item_id);
 
             $itemId = $item->id;
             $serviceName = $item->item_name;
 
-            // Complimentary items are always free
-            $unitPrice = 0;
+            if ($type === 'complimentary') {
+                $unitPrice = 0;
+            }
         }
 
         $quantity = (int) $request->quantity;
@@ -775,6 +877,7 @@ class BookingController extends Controller
 
         DB::transaction(function () use (
             $booking,
+            $type,
             $itemId,
             $serviceName,
             $quantity,
@@ -783,12 +886,12 @@ class BookingController extends Controller
             $request
         ) {
 
-            if ($request->type === 'complimentary') {
+            // Deduct stock only for inventory items
+            if ($request->type !== 'other') {
 
                 $item = Item::findOrFail($itemId);
 
                 if (!$item->hasStock($quantity)) {
-
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'quantity' => 'Insufficient stock available.'
                     ]);
@@ -800,7 +903,7 @@ class BookingController extends Controller
             BookingService::create([
                 'booking_id'   => $booking->id,
                 'item_id'      => $itemId,
-                'type'         => $request->type,
+                'type'         => $type, // <-- IMPORTANT
                 'service_name' => $serviceName,
                 'quantity'     => $quantity,
                 'unit_price'   => $unitPrice,
@@ -811,9 +914,7 @@ class BookingController extends Controller
             ]);
         });
 
-        return redirect()
-            ->back()
-            ->with('success', 'Guest service added successfully.');
+        return back()->with('success', 'Guest service added successfully.');
     }
 
     /**
@@ -823,13 +924,10 @@ class BookingController extends Controller
     {
         DB::transaction(function () use ($service) {
 
-            if (
-                $service->type === 'complimentary' &&
-                $service->item
-            ) {
-                $service->item->increaseStock(
-                    $service->quantity
-                );
+            // Restore stock only if this service is linked to an inventory item
+            if ($service->item_id && $service->item) {
+
+                $service->item->increaseStock($service->quantity);
             }
 
             $service->delete();

@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends Model
 {
@@ -19,6 +20,7 @@ class Booking extends Model
         'chargeable_amount',
         'complimentary_amount',
         'total_amount',
+        'discount',
 
         // Payment
         'paid_amount',
@@ -36,6 +38,7 @@ class Booking extends Model
 
         // Remarks
         'remarks',
+        'discount_remark',
 
         // Audit
         'created_by',
@@ -50,6 +53,7 @@ class Booking extends Model
         'chargeable_amount' => 'decimal:2',
         'complimentary_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'discount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'balance_amount' => 'decimal:2',
     ];
@@ -84,6 +88,12 @@ class Booking extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(BookingPayment::class);
+    }
+
+
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class);
     }
 
     /**

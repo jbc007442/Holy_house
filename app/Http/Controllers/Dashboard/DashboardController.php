@@ -12,6 +12,7 @@ use App\Models\BookingService;
 use App\Models\Item;
 use App\Models\PurchaseHistory;
 use App\Models\StockMovement;
+use App\Models\Invoice;
 use App\Models\LoginHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,17 +44,30 @@ class DashboardController extends Controller
     /**
      * Dashboard Data (AJAX)
      */
+
     public function data(Request $request)
     {
         $loginHistory = LoginHistory::with('user')
             ->latest('login_at')
             ->paginate(10);
 
+        $revenue = Invoice::query();
+
+        if ($request->filled('building_id')) {
+
+            $revenue->whereHas('booking.room', function ($q) use ($request) {
+
+                $q->where('building_id', $request->building_id);
+            });
+        }
+
         return response()->json([
 
             'stats' => [
 
                 'buildings' => Building::count(),
+
+                'revenue' => $revenue->sum('grand_total'),
 
                 'rooms' => Room::count(),
 
@@ -62,6 +76,10 @@ class DashboardController extends Controller
                 'users' => User::count(),
 
             ],
+
+            'buildingList' => Building::select('id', 'name')
+                ->orderBy('name')
+                ->get(),
 
             'loginHistory' => $loginHistory->items(),
 
@@ -79,4 +97,5 @@ class DashboardController extends Controller
 
         ]);
     }
+
 }

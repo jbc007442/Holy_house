@@ -22,6 +22,9 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+            // Invoice Amount
+            $table->decimal('grand_total', 12, 2)->default(0);
+
             // Audit
             $table->foreignId('created_by')
                 ->nullable()

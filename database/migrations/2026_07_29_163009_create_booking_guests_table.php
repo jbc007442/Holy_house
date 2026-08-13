@@ -28,6 +28,8 @@ return new class extends Migration
 
             $table->string('nationality')->nullable();
 
+            $table->string('state')->nullable();
+
             $table->boolean('is_primary')->default(false);
 
             // Audit

@@ -409,101 +409,102 @@
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
+    <script>
+        $(function() {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Building -> Floors
-    |--------------------------------------------------------------------------
-    */
+            /*
+            |--------------------------------------------------------------------------
+            | Building -> Floors
+            |--------------------------------------------------------------------------
+            */
 
-    function loadFloors() {
+            function loadFloors() {
 
-        let buildingId = $('#building_id').val();
+                let buildingId = $('#building_id').val();
 
-        $('#floor').html('<option value="">Loading...</option>');
-        $('#room_id').html('<option value="">Select Room</option>');
+                $('#floor').html('<option value="">Loading...</option>');
+                $('#room_id').html('<option value="">Select Room</option>');
 
-        if (!buildingId) {
-            $('#floor').html('<option value="">Select Floor</option>');
-            return;
-        }
+                if (!buildingId) {
+                    $('#floor').html('<option value="">Select Floor</option>');
+                    return;
+                }
 
-        $.ajax({
-            url: "{{ route('dashboard.property.buildings.floors', ':id') }}".replace(':id', buildingId),
-            type: "GET",
-            dataType: "json",
+                $.ajax({
+                    url: "{{ route('dashboard.property.buildings.floors', ':id') }}".replace(':id',
+                        buildingId),
+                    type: "GET",
+                    dataType: "json",
 
-            success: function (floors) {
+                    success: function(floors) {
 
-                let html = '<option value="">Select Floor</option>';
+                        let html = '<option value="">Select Floor</option>';
 
-                $.each(floors, function (index, floor) {
+                        $.each(floors, function(index, floor) {
 
-                    html += `
+                            html += `
                         <option value="${floor.name}">
                             ${floor.name}
                         </option>
                     `;
 
+                        });
+
+                        $('#floor').html(html);
+
+                    },
+
+                    error: function() {
+
+                        $('#floor').html('<option value="">No Floors Found</option>');
+
+                    }
+
                 });
-
-                $('#floor').html(html);
-
-            },
-
-            error: function () {
-
-                $('#floor').html('<option value="">No Floors Found</option>');
 
             }
 
-        });
+            /*
+            |--------------------------------------------------------------------------
+            | Floor -> Rooms
+            |--------------------------------------------------------------------------
+            */
 
-    }
+            function loadRooms() {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Floor -> Rooms
-    |--------------------------------------------------------------------------
-    */
+                let buildingId = $('#building_id').val();
+                let floor = $('#floor').val();
 
-    function loadRooms() {
+                $('#room_id').html('<option value="">Loading...</option>');
 
-        let buildingId = $('#building_id').val();
-        let floor = $('#floor').val();
+                if (!buildingId || !floor) {
 
-        $('#room_id').html('<option value="">Loading...</option>');
+                    $('#room_id').html('<option value="">Select Room</option>');
 
-        if (!buildingId || !floor) {
+                    return;
 
-            $('#room_id').html('<option value="">Select Room</option>');
+                }
 
-            return;
+                $.ajax({
 
-        }
+                    url: "{{ route('dashboard.bookings.rooms', ':id') }}".replace(':id', buildingId),
 
-        $.ajax({
+                    type: "GET",
 
-            url: "{{ route('dashboard.bookings.rooms', ':id') }}".replace(':id', buildingId),
+                    data: {
+                        floor: floor
+                    },
 
-            type: "GET",
+                    dataType: "json",
 
-            data: {
-                floor: floor
-            },
+                    success: function(rooms) {
+                        console.log(rooms);
 
-            dataType: "json",
+                        let html = '<option value="">Select Room</option>';
 
-            success: function (rooms) {
-                console.log(rooms);
+                        $.each(rooms, function(index, room) {
 
-                let html = '<option value="">Select Room</option>';
-
-                $.each(rooms, function (index, room) {
-
-                    html += `
+                            html += `
                         <option
                             value="${room.id}"
                             data-rent="${room.base_price}"
@@ -512,109 +513,154 @@ $(function () {
                         </option>
                     `;
 
+                        });
+
+                        $('#room_id').html(html);
+
+                    },
+
+                    error: function() {
+
+                        $('#room_id').html('<option value="">No Rooms Found</option>');
+
+                    }
+
                 });
-
-                $('#room_id').html(html);
-
-            },
-
-            error: function () {
-
-                $('#room_id').html('<option value="">No Rooms Found</option>');
 
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Events
+            |--------------------------------------------------------------------------
+            */
+
+            $('#building_id').on('change', function() {
+
+                $('#roomRent').text('₹0');
+
+                $('#roomStatus')
+                    .text('Select Room')
+                    .removeClass(
+                        'bg-green-100 text-green-700 bg-red-100 text-red-700 bg-yellow-100 text-yellow-700')
+                    .addClass('bg-zinc-100 text-zinc-700');
+
+                loadFloors();
+
+            });
+
+            $('#floor').on('change', function() {
+
+                loadRooms();
+
+            });
+
+            $('#room_id').on('change', function() {
+
+                let selected = $(this).find(':selected');
+
+                let rent = selected.data('rent') || 0;
+                let status = selected.data('status') || 'N/A';
+
+                $('#roomRent').text('₹' + rent);
+
+                $('input[name="room_rent"]').val(rent);
+
+                let badge = $('#roomStatus');
+
+                badge.text(status);
+
+                badge.removeClass(
+                    'bg-green-100 text-green-700 bg-red-100 text-red-700 bg-yellow-100 text-yellow-700 bg-zinc-100 text-zinc-700'
+                );
+
+                if (status === 'available') {
+
+                    badge.addClass('bg-green-100 text-green-700');
+
+                } else if (status === 'blocked') {
+
+                    badge.addClass('bg-red-100 text-red-700');
+
+                } else if (status === 'maintenance') {
+
+                    badge.addClass('bg-yellow-100 text-yellow-700');
+
+                } else {
+
+                    badge.addClass('bg-zinc-100 text-zinc-700');
+
+                }
+
+            });
+
         });
 
-    }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Events
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | Guest Form
+        |--------------------------------------------------------------------------
+        */
 
-    $('#building_id').on('change', function () {
+        document.addEventListener('DOMContentLoaded', function() {
 
-        $('#roomRent').text('₹0');
+            const guestCount = document.getElementById('guestCount');
+            const guestContainer = document.getElementById('guestContainer');
+            const indianStates = [
+                "Andhra Pradesh",
+                "Arunachal Pradesh",
+                "Assam",
+                "Bihar",
+                "Chhattisgarh",
+                "Goa",
+                "Gujarat",
+                "Haryana",
+                "Himachal Pradesh",
+                "Jharkhand",
+                "Karnataka",
+                "Kerala",
+                "Madhya Pradesh",
+                "Maharashtra",
+                "Manipur",
+                "Meghalaya",
+                "Mizoram",
+                "Nagaland",
+                "Odisha",
+                "Punjab",
+                "Rajasthan",
+                "Sikkim",
+                "Tamil Nadu",
+                "Telangana",
+                "Tripura",
+                "Uttar Pradesh",
+                "Uttarakhand",
+                "West Bengal",
 
-        $('#roomStatus')
-            .text('Select Room')
-            .removeClass('bg-green-100 text-green-700 bg-red-100 text-red-700 bg-yellow-100 text-yellow-700')
-            .addClass('bg-zinc-100 text-zinc-700');
+                // Union Territories
+                "Andaman and Nicobar Islands",
+                "Chandigarh",
+                "Dadra and Nagar Haveli and Daman and Diu",
+                "Delhi",
+                "Jammu and Kashmir",
+                "Ladakh",
+                "Lakshadweep",
+                "Puducherry"
+            ];
 
-        loadFloors();
+            const stateOptions = indianStates
+                .map(state => `<option value="${state}">${state}</option>`)
+                .join('');
 
-    });
+            function renderGuests() {
 
-    $('#floor').on('change', function () {
+                guestContainer.innerHTML = '';
 
-        loadRooms();
+                let total = parseInt(guestCount.value);
 
-    });
+                for (let i = 1; i <= total; i++) {
 
-    $('#room_id').on('change', function () {
-
-        let selected = $(this).find(':selected');
-
-        let rent = selected.data('rent') || 0;
-        let status = selected.data('status') || 'N/A';
-
-        $('#roomRent').text('₹' + rent);
-
-        $('input[name="room_rent"]').val(rent);
-
-        let badge = $('#roomStatus');
-
-        badge.text(status);
-
-        badge.removeClass(
-            'bg-green-100 text-green-700 bg-red-100 text-red-700 bg-yellow-100 text-yellow-700 bg-zinc-100 text-zinc-700'
-        );
-
-        if (status === 'available') {
-
-            badge.addClass('bg-green-100 text-green-700');
-
-        } else if (status === 'blocked') {
-
-            badge.addClass('bg-red-100 text-red-700');
-
-        } else if (status === 'maintenance') {
-
-            badge.addClass('bg-yellow-100 text-yellow-700');
-
-        } else {
-
-            badge.addClass('bg-zinc-100 text-zinc-700');
-
-        }
-
-    });
-
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| Guest Form
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', function () {
-
-    const guestCount = document.getElementById('guestCount');
-    const guestContainer = document.getElementById('guestContainer');
-
-    function renderGuests() {
-
-        guestContainer.innerHTML = '';
-
-        let total = parseInt(guestCount.value);
-
-        for (let i = 1; i <= total; i++) {
-
-            guestContainer.innerHTML += `
+                    guestContainer.innerHTML += `
                 <div class="border rounded-2xl p-5">
 
                     <h3 class="font-semibold text-zinc-800 mb-5">
@@ -687,27 +733,42 @@ document.addEventListener('DOMContentLoaded', function () {
                                 class="w-full rounded-xl border border-zinc-300 px-4 py-3">
                         </div>
 
+                        <div>
+                             <label class="block mb-2 text-sm font-medium">
+                                 State
+                             </label>
+
+                             <select
+                               name="guests[${i}][state]"
+                                 class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+
+                                  <option value="">Select State / UT</option>
+                                   ${stateOptions}
+
+                              </select>
+                         </div>
+
                     </div>
 
                 </div>
             `;
-        }
+                }
 
-        for (let i = 1; i <= total; i++) {
+                for (let i = 1; i <= total; i++) {
 
-            $(`#nationality_${i}`).countrySelect({
-                defaultCountry: "in",
-                preferredCountries: ['in', 'us', 'gb', 'ae']
-            });
+                    $(`#nationality_${i}`).countrySelect({
+                        defaultCountry: "in",
+                        preferredCountries: ['in', 'us', 'gb', 'ae']
+                    });
 
-        }
+                }
 
-    }
+            }
 
-    renderGuests();
+            renderGuests();
 
-    guestCount.addEventListener('change', renderGuests);
+            guestCount.addEventListener('change', renderGuests);
 
-});
-</script>
+        });
+    </script>
 @endpush

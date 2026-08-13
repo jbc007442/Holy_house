@@ -8,7 +8,7 @@
 
         <!-- Header -->
 
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
             <div>
 
@@ -16,14 +16,37 @@
                     Dashboard
                 </h1>
 
-                <p class="text-zinc-500 mt-1">
+                <p class="mt-1 text-zinc-500">
                     Welcome back! Here's an overview of your hotel.
                 </p>
 
             </div>
 
-            <div class="text-sm text-zinc-500">
-                {{ now()->format('d M Y') }}
+            <div class="flex items-center gap-3">
+
+                <div class="relative">
+
+                    <i class="fa-solid fa-building absolute left-3 top-1/3  text-zinc-400"></i>
+
+                    <select id="revenueBuilding"
+                        class="w-56 rounded-xl border border-zinc-300 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+
+                        <option value="">
+                            All Buildings
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-500 shadow-sm">
+
+                    <i class="fa-solid fa-calendar-days mr-2 text-blue-500"></i>
+
+                    {{ now()->format('d M Y') }}
+
+                </div>
+
             </div>
 
         </div>
@@ -52,6 +75,35 @@
 
                     <div class="h-14 w-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
                         <i class="fa-solid fa-building text-2xl"></i>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Revenue -->
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+
+                <div class="flex items-center justify-between">
+
+                    <div>
+
+                        <p class="text-sm text-zinc-500">
+                            Total Revenue
+                        </p>
+
+                        <h2 id="totalRevenue" class="mt-2 text-3xl font-bold text-zinc-900">
+                            ₹0.00
+                        </h2>
+
+                        <p id="revenueLabel" class="mt-1 text-xs text-zinc-400">
+                            All Buildings
+                        </p>
+
+                    </div>
+
+                    <div class="h-14 w-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                        <i class="fa-solid fa-indian-rupee-sign text-2xl"></i>
                     </div>
 
                 </div>

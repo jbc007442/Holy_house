@@ -14,6 +14,7 @@ class BookingGuest extends Model
         'id_type',
         'id_number',
         'nationality',
+        'state',
         'is_primary',
         'created_by',
         'updated_by',

@@ -28,7 +28,7 @@ class BuildingController extends Controller
                     });
                 })
                 ->latest()
-                ->paginate(1);
+                ->paginate(10);
 
             return response()->json([
 
