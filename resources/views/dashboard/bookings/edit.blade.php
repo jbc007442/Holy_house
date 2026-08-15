@@ -221,18 +221,86 @@
                                     </div>
 
                                     <div>
-
                                         <label class="block mb-2 text-sm font-medium">
-
                                             Nationality
-
                                         </label>
 
                                         <input type="text" id="nationality_{{ $index }}"
                                             name="guests[{{ $index }}][nationality]"
                                             value="{{ $guest->nationality }}"
                                             class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                                    </div>
 
+                                    <!-- State -->
+                                    <div id="state_wrapper_{{ $index }}">
+                                        <label class="block mb-2 text-sm font-medium">
+                                            State
+                                        </label>
+
+                                        <select name="guests[{{ $index }}][state]"
+                                            class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+
+                                            <option value="">Select State / UT</option>
+
+                                            @php
+                                                $indianStates = [
+                                                    'Andhra Pradesh',
+                                                    'Arunachal Pradesh',
+                                                    'Assam',
+                                                    'Bihar',
+                                                    'Chhattisgarh',
+                                                    'Goa',
+                                                    'Gujarat',
+                                                    'Haryana',
+                                                    'Himachal Pradesh',
+                                                    'Jharkhand',
+                                                    'Karnataka',
+                                                    'Kerala',
+                                                    'Madhya Pradesh',
+                                                    'Maharashtra',
+                                                    'Manipur',
+                                                    'Meghalaya',
+                                                    'Mizoram',
+                                                    'Nagaland',
+                                                    'Odisha',
+                                                    'Punjab',
+                                                    'Rajasthan',
+                                                    'Sikkim',
+                                                    'Tamil Nadu',
+                                                    'Telangana',
+                                                    'Tripura',
+                                                    'Uttar Pradesh',
+                                                    'Uttarakhand',
+                                                    'West Bengal',
+                                                    'Andaman and Nicobar Islands',
+                                                    'Chandigarh',
+                                                    'Dadra and Nagar Haveli and Daman and Diu',
+                                                    'Delhi',
+                                                    'Jammu and Kashmir',
+                                                    'Ladakh',
+                                                    'Lakshadweep',
+                                                    'Puducherry',
+                                                ];
+                                            @endphp
+
+                                            @foreach ($indianStates as $state)
+                                                <option value="{{ $state }}"
+                                                    {{ $guest->state == $state ? 'selected' : '' }}>
+                                                    {{ $state }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- C Form -->
+                                    <div id="cform_wrapper_{{ $index }}">
+                                        <label class="block mb-2 text-sm font-medium">
+                                            C Form
+                                        </label>
+
+                                        <input type="text" name="guests[{{ $index }}][c_form]"
+                                            value="{{ $guest->c_form }}" placeholder="Enter C Form Number"
+                                            class="w-full rounded-xl border border-zinc-300 px-4 py-3">
                                     </div>
 
                                 </div>
@@ -814,20 +882,53 @@
         });
     </script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+ <script>
+document.addEventListener('DOMContentLoaded', function () {
 
-            @foreach ($booking->guests as $index => $guest)
+    @foreach ($booking->guests as $index => $guest)
 
-                $("#nationality_{{ $index }}").countrySelect({
+        const nationalityInput{{ $index }} = $("#nationality_{{ $index }}");
 
-                    defaultCountry: "in",
-
-                    preferredCountries: ['in', 'us', 'gb', 'ae']
-
-                });
-            @endforeach
-
+        nationalityInput{{ $index }}.countrySelect({
+            preferredCountries: ['in', 'us', 'gb', 'ae']
         });
-    </script>
+
+        // Set saved nationality
+        nationalityInput{{ $index }}.countrySelect(
+            "setCountry",
+            @json($guest->nationality)
+        );
+
+        function toggleFields{{ $index }}() {
+
+            const countryData = nationalityInput{{ $index }}
+                .countrySelect("getSelectedCountryData");
+
+            console.log("Guest {{ $index }}", {
+                stored: @json($guest->nationality),
+                countryData: countryData
+            });
+
+            if (countryData && countryData.iso2 === "in") {
+
+                $("#state_wrapper_{{ $index }}").removeClass("hidden");
+                $("#cform_wrapper_{{ $index }}").addClass("hidden");
+
+            } else {
+
+                $("#state_wrapper_{{ $index }}").addClass("hidden");
+                $("#cform_wrapper_{{ $index }}").removeClass("hidden");
+            }
+        }
+
+        toggleFields{{ $index }}();
+
+        nationalityInput{{ $index }}.on("countrychange", function () {
+            toggleFields{{ $index }}();
+        });
+
+    @endforeach
+
+});
+</script>
 @endpush

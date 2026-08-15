@@ -195,6 +195,37 @@
 
                     </div>
 
+                    <!-- Stay Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+
+                        <!-- Expected Check Out -->
+                        <div>
+
+                            <label class="block mb-2 text-sm font-medium">
+                                Expected Check Out
+                            </label>
+
+                            <input type="date" id="expected_check_out" name="expected_check_out"
+                                min="{{ now()->toDateString() }}" value="{{ old('expected_check_out') }}"
+                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+
+                        </div>
+
+                        <!-- Expected Stay -->
+                        <div>
+
+                            <label class="block mb-2 text-sm font-medium">
+                                Expected Stay (Days)
+                            </label>
+
+                            <input type="number" id="expected_stay_days" name="expected_stay_days"
+                                value="{{ old('expected_stay_days', 1) }}" readonly
+                                class="w-full rounded-xl border border-zinc-300 bg-zinc-100 px-4 py-3">
+
+                        </div>
+
+                    </div>
+
                     <!-- Room Details -->
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
@@ -531,6 +562,39 @@
 
             /*
             |--------------------------------------------------------------------------
+            | Expected Stay Days
+            |--------------------------------------------------------------------------
+            */
+
+            function calculateStayDays() {
+
+                let checkout = $('#expected_check_out').val();
+
+                if (!checkout) {
+                    $('#expected_stay_days').val(1);
+                    return;
+                }
+
+                let today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                let checkoutDate = new Date(checkout);
+                checkoutDate.setHours(0, 0, 0, 0);
+
+                let diff = Math.ceil(
+                    (checkoutDate - today) / (1000 * 60 * 60 * 24)
+                );
+
+                if (diff < 1) {
+                    diff = 1;
+                }
+
+                $('#expected_stay_days').val(diff);
+
+            }
+
+            /*
+            |--------------------------------------------------------------------------
             | Events
             |--------------------------------------------------------------------------
             */
@@ -593,6 +657,12 @@
                 }
 
             });
+
+            $('#expected_check_out').on('change', function() {
+                calculateStayDays();
+            });
+
+            calculateStayDays();
 
         });
 
@@ -661,108 +731,160 @@
                 for (let i = 1; i <= total; i++) {
 
                     guestContainer.innerHTML += `
-                <div class="border rounded-2xl p-5">
+        <div class="border rounded-2xl p-5">
 
-                    <h3 class="font-semibold text-zinc-800 mb-5">
-                        Guest ${i}
-                    </h3>
+            <h3 class="font-semibold text-zinc-800 mb-5">
+                Guest ${i}
+            </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
-                        <div>
-                            <label class="block mb-2 text-sm font-medium">
-                                Guest Name
-                            </label>
+                <!-- Guest Name -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
+                        Guest Name
+                    </label>
 
-                            <input
-                                type="text"
-                                name="guests[${i}][guest_name]"
-                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
-                        </div>
+                    <input
+                        type="text"
+                        name="guests[${i}][guest_name]"
+                        class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                </div>
 
-                        <div>
-                            <label class="block mb-2 text-sm font-medium">
-                                Mobile Number
-                            </label>
+                <!-- Mobile -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
+                        Mobile Number
+                    </label>
 
-                            <input
-                                type="text"
-                                name="guests[${i}][mobile]"
-                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
-                        </div>
+                    <input
+                        type="text"
+                        name="guests[${i}][mobile]"
+                        class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                </div>
 
-                        <div>
-                            <label class="block mb-2 text-sm font-medium">
-                                ID Type
-                            </label>
+                <!-- ID Type -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
+                        ID Type
+                    </label>
 
-                            <select
-                                name="guests[${i}][id_type]"
-                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                    <select
+                        name="guests[${i}][id_type]"
+                        class="w-full rounded-xl border border-zinc-300 px-4 py-3">
 
-                                <option value="">Select ID</option>
-                                <option>Aadhaar Card</option>
-                                <option>OCI</option>
-                                <option>Driving Licence</option>
-                                <option>Passport</option>
-                                <option>Voter ID</option>
+                        <option value="">Select ID</option>
+                        <option>Aadhaar Card</option>
+                        <option>OCI</option>
+                        <option>Driving Licence</option>
+                        <option>Passport</option>
+                        <option>Voter ID</option>
 
-                            </select>
-                        </div>
+                    </select>
+                </div>
 
-                        <div>
-                            <label class="block mb-2 text-sm font-medium">
-                                ID Number
-                            </label>
+                <!-- ID Number -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
+                        ID Number
+                    </label>
 
-                            <input
-                                type="text"
-                                name="guests[${i}][id_number]"
-                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
-                        </div>
+                    <input
+                        type="text"
+                        name="guests[${i}][id_number]"
+                        class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                </div>
 
-                        <div>
-                            <label class="block mb-2 text-sm font-medium">
-                                Nationality
-                            </label>
+                <!-- Nationality -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium">
+                        Nationality
+                    </label>
 
-                            <input
-                                type="text"
-                                name="guests[${i}][nationality]"
-                                id="nationality_${i}"
-                                class="w-full rounded-xl border border-zinc-300 px-4 py-3">
-                        </div>
+                    <input
+                        type="text"
+                        name="guests[${i}][nationality]"
+                        id="nationality_${i}"
+                        class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                </div>
 
-                        <div>
-                             <label class="block mb-2 text-sm font-medium">
-                                 State
-                             </label>
+                <!-- State -->
+                <div id="state_wrapper_${i}">
+                    <label class="block mb-2 text-sm font-medium">
+                        State
+                    </label>
 
-                             <select
-                               name="guests[${i}][state]"
-                                 class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+                    <select
+                        name="guests[${i}][state]"
+                        class="w-full rounded-xl border border-zinc-300 px-4 py-3">
 
-                                  <option value="">Select State / UT</option>
-                                   ${stateOptions}
+                        <option value="">Select State / UT</option>
+                        ${stateOptions}
 
-                              </select>
-                         </div>
+                    </select>
+                </div>
 
-                    </div>
+                <!-- C Form -->
+                <div id="cform_wrapper_${i}" class="hidden">
+
+                    <label class="block mb-2 text-sm font-medium">
+                        C Form
+                    </label>
+
+                    <label class="inline-flex items-center gap-3 mt-3">
+
+                        <input
+        type="text"
+        name="guests[${i}][c_form]"
+        placeholder="Enter C Form Number"
+        class="w-full rounded-xl border border-zinc-300 px-4 py-3">
+
+
+                    </label>
 
                 </div>
-            `;
+
+            </div>
+
+        </div>
+        `;
                 }
 
+                // Initialize Country Select
                 for (let i = 1; i <= total; i++) {
 
-                    $(`#nationality_${i}`).countrySelect({
+                    const input = $(`#nationality_${i}`);
+
+                    function toggleFields() {
+
+                        const country = input.countrySelect("getSelectedCountryData").iso2;
+
+                        if (country === "in") {
+                            $(`#state_wrapper_${i}`).removeClass("hidden");
+                            $(`#cform_wrapper_${i}`).addClass("hidden");
+                        } else {
+                            $(`#state_wrapper_${i}`).addClass("hidden");
+                            $(`#cform_wrapper_${i}`).removeClass("hidden");
+                        }
+                    }
+
+                    input.countrySelect({
                         defaultCountry: "in",
                         preferredCountries: ['in', 'us', 'gb', 'ae']
                     });
 
-                }
+                    // Initial state
+                    toggleFields();
 
+                    // When country changes
+                    input.on("change", function() {
+                        toggleFields();
+                    });
+
+                    input.on("countrychange", function() {
+                        toggleFields();
+                    });
+                }
             }
 
             renderGuests();

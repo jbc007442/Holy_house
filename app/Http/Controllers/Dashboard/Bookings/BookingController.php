@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Invoice;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 
 class BookingController extends Controller
@@ -68,13 +70,14 @@ class BookingController extends Controller
     {
         $request->validate([
             'room_id'      => 'required|exists:rooms,id',
+            'expected_check_out'    => 'required|date|after_or_equal:today',
+            'expected_stay_days'    => 'required|integer|min:1',
             'room_rent'    => 'required|numeric|min:0',
             'amount'       => 'nullable|numeric|min:0',
             'remarks'      => 'nullable|string',
             'guests'       => 'required|array|min:1',
             'guests.*.guest_name' => 'required|string|max:255',
             'guests.*.mobile'     => 'nullable|string|max:20',
-            'guests.*.state'      => 'nullable|string|max:100',
         ]);
 
         DB::beginTransaction();
@@ -84,31 +87,52 @@ class BookingController extends Controller
             $paidAmount = $request->amount ?? 0;
 
             $booking = Booking::create([
-                'booking_no'           => 'BK-' . strtoupper(Str::random(8)),
-                'room_id'              => $request->room_id,
-                'check_in'             => now(),
-                'check_out'            => null,
 
-                'guest_count'          => count($request->guests),
+                'booking_no' => 'BK-' . strtoupper(Str::random(8)),
 
-                'room_rent'            => $request->room_rent,
-                'chargeable_amount'    => 0,
+                'room_id' => $request->room_id,
+
+                // Stay Details
+                'check_in' => now(),
+
+                'expected_check_out' => $request->expected_check_out,
+
+                'expected_stay_days' => $request->expected_stay_days,
+
+                'check_out' => null,
+
+                // Guests
+                'guest_count' => count($request->guests),
+
+                // Charges
+                'room_rent' => $request->room_rent,
+
+                'chargeable_amount' => 0,
+
                 'complimentary_amount' => 0,
 
-                'total_amount'         => $request->room_rent,
-                'paid_amount'          => $paidAmount,
-                'balance_amount'       => $request->room_rent - $paidAmount,
+                'total_amount' => $request->room_rent,
 
-                'payment_status'       => $paidAmount == 0
+                // Payment
+                'paid_amount' => $paidAmount,
+
+                'balance_amount' => $request->room_rent - $paidAmount,
+
+                'payment_status' => $paidAmount == 0
                     ? 'pending'
                     : ($paidAmount >= $request->room_rent ? 'paid' : 'partial'),
 
-                'status'               => $request->status ?? 'checked_in',
+                // Status
+                'status' => $request->status ?? 'checked_in',
 
-                'remarks'              => $request->remarks,
+                // Remarks
+                'remarks' => $request->remarks,
 
-                'created_by'           => auth()->id(),
-                'updated_by'           => auth()->id(),
+                // Audit
+                'created_by' => auth()->id(),
+
+                'updated_by' => auth()->id(),
+
             ]);
 
             /*
@@ -130,11 +154,15 @@ class BookingController extends Controller
                     'id_number'   => $guest['id_number'] ?? null,
 
                     'nationality' => $guest['nationality'] ?? null,
-                    
+
                     'state'       => $guest['state'] ?? null,
+
+                    'c_form'      => $guest['c_form'] ?? false,
 
                     'is_primary'  => $index === 0,
 
+                    'created_by'  => auth()->id(),
+                    'updated_by'  => auth()->id(),
                 ]);
             }
 
@@ -224,15 +252,14 @@ class BookingController extends Controller
      */
     public function update(Request $request, string $id)
     {
-
         $request->validate([
-            'room_id'      => 'required|exists:rooms,id',
-            'room_rent'    => 'required|numeric|min:0',
-            'remarks'      => 'nullable|string',
-            'guests'       => 'required|array|min:1',
+            'room_id' => 'required|exists:rooms,id',
+            'room_rent' => 'required|numeric|min:0',
+            'remarks' => 'nullable|string',
+
+            'guests' => 'required|array|min:1',
             'guests.*.guest_name' => 'required|string|max:255',
-            'guests.*.mobile'     => 'nullable|string|max:20',
-            'guests.*.state'      => 'nullable|string|max:100',
+            'guests.*.mobile' => 'nullable|string|max:20',
         ]);
 
         DB::beginTransaction();
@@ -251,22 +278,27 @@ class BookingController extends Controller
 
             $booking->update([
 
-                'room_id'              => $request->room_id,
+                'room_id' => $request->room_id,
 
-                'guest_count'          => count($request->guests),
+                // Guests
+                'guest_count' => count($request->guests),
 
-                'room_rent'            => $request->room_rent,
+                // Charges
+                'room_rent' => $request->room_rent,
+                'total_amount' => $request->room_rent,
 
-                'total_amount'         => $request->room_rent,
+                // Payment
+                'balance_amount' => $request->room_rent - $paidAmount,
 
-                'balance_amount'       => $request->room_rent - $paidAmount,
-
-                'payment_status'       => $paidAmount == 0
+                'payment_status' => $paidAmount == 0
                     ? 'pending'
                     : ($paidAmount >= $request->room_rent ? 'paid' : 'partial'),
 
-                'remarks'              => $request->remarks,
-                'updated_by'           => auth()->id(),
+                // Remarks
+                'remarks' => $request->remarks,
+
+                // Audit
+                'updated_by' => auth()->id(),
 
             ]);
 
@@ -282,20 +314,24 @@ class BookingController extends Controller
 
                 $booking->guests()->create([
 
-                    'guest_name'  => $guest['guest_name'] ?? '',
+                    'guest_name' => $guest['guest_name'] ?? '',
 
-                    'mobile'      => $guest['mobile'] ?? '',
+                    'mobile' => $guest['mobile'] ?? '',
 
-                    'id_type'     => $guest['id_type'] ?? null,
+                    'id_type' => $guest['id_type'] ?? null,
 
-                    'id_number'   => $guest['id_number'] ?? null,
+                    'id_number' => $guest['id_number'] ?? null,
 
                     'nationality' => $guest['nationality'] ?? null,
 
-                    'state'       => $guest['state'] ?? null,
+                    'state' => $guest['state'] ?? null,
 
-                    'is_primary'  => $index === 0,
+                    'c_form' => $guest['c_form'] ?? null,
 
+                    'is_primary' => $index === 0,
+
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
                 ]);
             }
 
@@ -400,42 +436,6 @@ class BookingController extends Controller
     /**
      * Check Out Guest
      */
-
-    // public function checkout(string $id)
-    // {
-    //     DB::transaction(function () use ($id) {
-
-    //         $booking = Booking::with('room')->findOrFail($id);
-
-    //         $booking->update([
-    //             'status'    => 'checked_out',
-    //             'check_out' => now(),
-    //         ]);
-
-    //         $booking->room->update([
-    //             'status' => 'available',
-    //         ]);
-
-    //         // Generate Invoice
-    //         Invoice::firstOrCreate(
-    //             [
-    //                 'booking_id' => $booking->id,
-    //             ],
-    //             [
-    //                 'invoice_no' => 'INV-' . str_pad(
-    //                     Invoice::max('id') + 1,
-    //                     6,
-    //                     '0',
-    //                     STR_PAD_LEFT
-    //                 ),
-    //             ]
-    //         );
-    //     });
-
-    //     return redirect()
-    //         ->route('dashboard.bookings.current-stays')
-    //         ->with('success', 'Guest checked out successfully.');
-    // }
 
     public function checkout(string $id)
     {
@@ -566,7 +566,6 @@ class BookingController extends Controller
             $query->where(function ($q) use ($search) {
 
                 $q->where('booking_no', 'like', "%{$search}%")
-
                     ->orWhereHas('guests', function ($guest) use ($search) {
 
                         $guest->where('guest_name', 'like', "%{$search}%")
@@ -610,18 +609,24 @@ class BookingController extends Controller
     */
 
         $statistics = [
+
+            // Total guests currently checked in
             'guest_count' => (clone $query)->count(),
 
+            // Total occupied rooms
             'running_rooms' => (clone $query)
                 ->distinct('room_id')
                 ->count('room_id'),
 
+            // Guests expected to check out today
             'checkout_today' => (clone $query)
-                ->whereDate('check_out', today())
+                ->whereDate('expected_check_out', today())
                 ->count(),
 
+            // Total room rent of all current stays
             'total_balance' => (clone $query)
-                ->sum('balance_amount'),
+                ->sum('room_rent'),
+
         ];
 
         /*
@@ -972,6 +977,45 @@ class BookingController extends Controller
 
         return response()->json([
             'booking' => $booking,
+        ]);
+    }
+
+
+    /**
+     * Update extented date
+     */
+
+    public function updateExpectedCheckout(Request $request, $id)
+    {
+        $request->validate([
+            'expected_check_out' => 'required|date|after_or_equal:today',
+        ]);
+
+        $booking = Booking::findOrFail($id);
+
+        $expectedStayDays = Carbon::parse($booking->check_in)
+            ->diffInDays(Carbon::parse($request->expected_check_out));
+
+        $booking->update([
+
+            'expected_check_out' => $request->expected_check_out,
+
+            'expected_stay_days' => max($expectedStayDays, 1),
+
+            'updated_by' => auth()->id(),
+
+        ]);
+
+        return response()->json([
+
+            'status' => true,
+
+            'message' => 'Stay extended successfully.',
+
+            'expected_check_out' => $booking->expected_check_out,
+
+            'expected_stay_days' => $booking->expected_stay_days,
+
         ]);
     }
 }

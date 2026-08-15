@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -10,9 +11,17 @@ class Booking extends Model
 {
     protected $fillable = [
         'booking_no',
+
+        // Room
         'room_id',
+
+        // Stay Details
         'check_in',
+        'expected_check_out',
+        'expected_stay_days',
         'check_out',
+
+        // Guests
         'guest_count',
 
         // Charges
@@ -46,9 +55,14 @@ class Booking extends Model
     ];
 
     protected $casts = [
-        'check_in' => 'date',
-        'check_out' => 'date',
+        // Stay Details
+        'check_in' => 'date:Y-m-d',
+        'expected_check_out' => 'date:Y-m-d',
+        'check_out' => 'date:Y-m-d',
 
+        'expected_stay_days' => 'integer',
+
+        // Amounts
         'room_rent' => 'decimal:2',
         'chargeable_amount' => 'decimal:2',
         'complimentary_amount' => 'decimal:2',
@@ -57,7 +71,6 @@ class Booking extends Model
         'paid_amount' => 'decimal:2',
         'balance_amount' => 'decimal:2',
     ];
-
     /**
      * Room
      */
@@ -90,14 +103,16 @@ class Booking extends Model
         return $this->hasMany(BookingPayment::class);
     }
 
-
+    /**
+     * Invoice
+     */
     public function invoice(): HasOne
     {
         return $this->hasOne(Invoice::class);
     }
 
     /**
-     * Audit
+     * Created By
      */
     public function creator(): BelongsTo
     {
@@ -105,7 +120,7 @@ class Booking extends Model
     }
 
     /**
-     * Audit
+     * Updated By
      */
     public function updater(): BelongsTo
     {

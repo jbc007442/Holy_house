@@ -51,11 +51,33 @@ class DashboardController extends Controller
             ->latest('login_at')
             ->paginate(10);
 
-        $revenue = Invoice::query();
+        /*
+    |--------------------------------------------------------------------------
+    | Revenue Query
+    |--------------------------------------------------------------------------
+    */
+
+        $revenue = Booking::query();
 
         if ($request->filled('building_id')) {
 
-            $revenue->whereHas('booking.room', function ($q) use ($request) {
+            $revenue->whereHas('room', function ($q) use ($request) {
+
+                $q->where('building_id', $request->building_id);
+            });
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Current Guests Query
+    |--------------------------------------------------------------------------
+    */
+
+        $bookingQuery = Booking::where('status', 'checked_in');
+
+        if ($request->filled('building_id')) {
+
+            $bookingQuery->whereHas('room', function ($q) use ($request) {
 
                 $q->where('building_id', $request->building_id);
             });
@@ -65,14 +87,50 @@ class DashboardController extends Controller
 
             'stats' => [
 
+                // Buildings
                 'buildings' => Building::count(),
 
-                'revenue' => $revenue->sum('grand_total'),
+                // Revenue
+                'revenue' => $revenue->sum('room_rent'),
 
-                'rooms' => Room::count(),
+                // Total Rooms
+                'rooms' => Room::when($request->filled('building_id'), function ($q) use ($request) {
 
-                'bookings' => Booking::where('status', 'checked_in')->count(),
+                    $q->where('building_id', $request->building_id);
+                })->count(),
 
+                // Available Rooms
+                'available_rooms' => Room::when($request->filled('building_id'), function ($q) use ($request) {
+
+                    $q->where('building_id', $request->building_id);
+                })
+                    ->where('status', 'available')
+                    ->count(),
+
+                // Running Rooms
+                'running_rooms' => Room::when($request->filled('building_id'), function ($q) use ($request) {
+
+                    $q->where('building_id', $request->building_id);
+                })
+                    ->where('status', 'running')
+                    ->count(),
+
+                // Today's Expected Check-Out
+                'today_checkout' => Booking::when($request->filled('building_id'), function ($q) use ($request) {
+
+                    $q->whereHas('room', function ($room) use ($request) {
+
+                        $room->where('building_id', $request->building_id);
+                    });
+                })
+                    ->where('status', 'checked_in')
+                    ->whereDate('expected_check_out', today())
+                    ->count(),
+
+                // Current Guests
+                'bookings' => $bookingQuery->count(),
+
+                // Users
                 'users' => User::count(),
 
             ],

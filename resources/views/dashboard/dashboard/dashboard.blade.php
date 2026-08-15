@@ -119,7 +119,7 @@
                     <div>
 
                         <p class="text-sm text-zinc-500">
-                            Rooms
+                            Total Rooms
                         </p>
 
                         <h2 id="totalRooms" class="mt-2 text-3xl font-bold text-zinc-900">
@@ -182,6 +182,93 @@
 
                     <div class="h-14 w-14 rounded-2xl bg-cyan-100 text-cyan-600 flex items-center justify-center">
                         <i class="fa-solid fa-users text-2xl"></i>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Available rooms -->
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+
+                <div class="flex items-center justify-between">
+
+                    <div>
+
+                        <p class="text-sm text-zinc-500">
+                            Available Rooms
+                        </p>
+
+                        <h2 id="availableRooms" class="mt-2 text-3xl font-bold text-green-600">
+
+                            0
+
+                        </h2>
+
+                    </div>
+
+                    <div class="h-14 w-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
+
+                        <i class="fa-solid fa-door-open text-2xl"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Running rooms -->
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+
+                <div class="flex items-center justify-between">
+
+                    <div>
+
+                        <p class="text-sm text-zinc-500">
+                            Running Rooms
+                        </p>
+
+                        <h2 id="runningRooms" class="mt-2 text-3xl font-bold text-red-600">
+
+                            0
+
+                        </h2>
+
+                    </div>
+
+                    <div class="h-14 w-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+
+                        <i class="fa-solid fa-bed text-2xl"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Check-out -->
+            <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+
+                <div class="flex items-center justify-between">
+
+                    <div>
+
+                        <p class="text-sm text-zinc-500">
+                            Today's Check-Out
+                        </p>
+
+                        <h2 id="todayCheckout" class="mt-2 text-3xl font-bold text-orange-600">
+
+                            0
+
+                        </h2>
+
+                    </div>
+
+                    <div class="h-14 w-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
+
+                        <i class="fa-solid fa-right-from-bracket text-2xl"></i>
+
                     </div>
 
                 </div>

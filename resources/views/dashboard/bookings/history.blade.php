@@ -22,33 +22,11 @@
 
         </div>
 
-        <div class="flex gap-3">
-
-            <button
-                class="px-5 py-2.5 rounded-xl border border-zinc-300 hover:bg-zinc-100">
-
-                <i class="fa-solid fa-file-pdf mr-2"></i>
-
-                Export PDF
-
-            </button>
-
-            <button
-                class="px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white">
-
-                <i class="fa-solid fa-file-excel mr-2"></i>
-
-                Export Excel
-
-            </button>
-
-        </div>
-
     </div>
 
     <!-- Statistics -->
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+    {{-- <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
         <div class="bg-white rounded-2xl border border-zinc-200 p-6 flex items-center justify-between">
 
@@ -150,7 +128,7 @@
 
         </div>
 
-    </div>
+    </div> --}}
 
     <!-- Filters -->
 

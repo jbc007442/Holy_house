@@ -30,6 +30,9 @@ return new class extends Migration
 
             $table->string('state')->nullable();
 
+            // C Form Required
+            $table->boolean('c_form')->default(false);
+
             $table->boolean('is_primary')->default(false);
 
             // Audit

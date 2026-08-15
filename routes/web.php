@@ -116,6 +116,7 @@ Route::middleware('auth')
         Route::get('/bookings/{id}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
         Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('bookings.update');
         Route::patch('/bookings/{id}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
+        Route::patch('/bookings/{id}/expected-checkout', [BookingController::class, 'updateExpectedCheckout'])->name('bookings.expected-checkout');
         Route::delete('/bookings/{id}', [BookingController::class, 'destroy'])->name('bookings.destroy');
         Route::get('/current-stays', [BookingController::class, 'currentStays'])->name('bookings.current-stays');
         Route::get('/current-stays/ajax', [BookingController::class, 'ajaxCurrentStays'])->name('bookings.current-stays.ajax');

@@ -59,6 +59,12 @@ function loadDashboard(page = 1) {
 
             $("#totalRooms").text(stats.rooms);
 
+            $("#availableRooms").text(stats.available_rooms);
+
+            $("#runningRooms").text(stats.running_rooms);
+
+            $("#todayCheckout").text(stats.today_checkout);
+
             $("#totalBookings").text(stats.bookings);
 
             $("#totalUsers").text(stats.users);

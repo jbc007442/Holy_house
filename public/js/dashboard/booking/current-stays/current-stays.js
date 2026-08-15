@@ -43,7 +43,7 @@ $(document).ready(function () {
 function loadCurrentStays() {
     $("#currentStayTable").html(`
         <tr>
-            <td colspan="9" class="text-center py-10 text-zinc-500">
+            <td colspan="10" class="text-center py-10 text-zinc-500">
                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>
                 Loading...
             </td>
@@ -76,7 +76,7 @@ function loadCurrentStays() {
         error: function () {
             $("#currentStayTable").html(`
                 <tr>
-                    <td colspan="9"
+                    <td colspan="10"
                         class="text-center py-10 text-red-500">
 
                         Failed to load current stays.
@@ -107,7 +107,7 @@ function renderTable(bookings) {
         html = `
             <tr>
 
-                <td colspan="9"
+                <td colspan="10"
                     class="text-center py-16 text-zinc-500">
 
                     <i class="fa-solid fa-bed text-4xl mb-3"></i>
@@ -128,17 +128,12 @@ function renderTable(bookings) {
 
     bookings.forEach(function (booking) {
         let guest = booking.guests.length ? booking.guests[0] : null;
-        console.log(booking);
-        console.log(booking.guests);
+
+        const today = new Date().toISOString().split("T")[0];
 
         let room = booking.room ?? {};
 
         let building = room.building ?? {};
-
-        // let viewUrl = window.currentStayConfig.viewUrl.replace(
-        //     ":id",
-        //     booking.id,
-        // );
 
         let editUrl = window.currentStayConfig.editUrl.replace(
             ":id",
@@ -194,6 +189,17 @@ ${formatDate(booking.check_in)}
 
 </td>
 
+<td class="px-5 py-4">
+
+    <input
+    type="date"
+    class="expectedCheckout rounded-lg border border-zinc-300 px-2 py-1"
+    value="${booking.expected_check_out ? booking.expected_check_out.substring(0, 10) : ""}"
+    min="${today}"
+    data-id="${booking.id}">
+
+</td>
+
 <td class="px-5 py-4 font-semibold text-red-600">
 
 ₹ ${Number(booking.balance_amount).toLocaleString("en-IN")}
@@ -244,9 +250,9 @@ name="_method"
 value="PATCH">
 
 <button
-class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white">
+class="px-2 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white whitespace-nowrap">
 
-Check Out
+Check-Out
 
 </button>
 
@@ -263,6 +269,43 @@ Check Out
 
     $("#currentStayTable").html(html);
 }
+
+$(document).on("change", ".expectedCheckout", function () {
+    let bookingId = $(this).data("id");
+
+    let expectedCheckOut = $(this).val();
+
+    $.ajax({
+        url: window.currentStayConfig.expectedCheckoutUrl.replace(
+            ":id",
+            bookingId,
+        ),
+
+        type: "PATCH",
+
+        data: {
+            _token: window.currentStayConfig.csrf,
+
+            expected_check_out: expectedCheckOut,
+        },
+
+        success: function (response) {
+            if (response.status) {
+                const formattedDate = formatDate(expectedCheckOut);
+
+                window.notyf.success(
+                    `Expected check-out updated to ${formattedDate}`,
+                );
+            }
+
+            loadCurrentStays();
+        },
+
+        error: function () {
+            alert("Failed to update expected check out.");
+        },
+    });
+});
 /*
 |--------------------------------------------------------------------------
 | Format Date
@@ -270,17 +313,26 @@ Check Out
 */
 
 function formatDate(date) {
+    if (!date) return "-";
 
-    if (!date) return '-';
+    const [year, month, day] = date.substring(0, 10).split("-");
 
-    return new Date(date).toLocaleDateString('en-IN', {
+    const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ];
 
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-
-    });
-
+    return `${day} ${months[parseInt(month, 10) - 1]} ${year}`;
 }
 
 /*
@@ -290,16 +342,15 @@ function formatDate(date) {
 */
 
 function formatCurrency(amount) {
-
     amount = Number(amount ?? 0);
 
-    return '₹ ' + amount.toLocaleString('en-IN', {
-
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-
-    });
-
+    return (
+        "₹ " +
+        amount.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })
+    );
 }
 
 /*
@@ -308,12 +359,10 @@ function formatCurrency(amount) {
 |--------------------------------------------------------------------------
 */
 
-$(document).on('click', '.serviceBtn', function () {
-
-    let bookingId = $(this).data('id');
+$(document).on("click", ".serviceBtn", function () {
+    let bookingId = $(this).data("id");
 
     openServicesModal(bookingId);
-
 });
 
 /*
@@ -323,14 +372,9 @@ $(document).on('click', '.serviceBtn', function () {
 */
 
 function openServicesModal(bookingId) {
+    $("#servicesModal").removeClass("hidden").addClass("flex");
 
-    $('#servicesModal')
-        .removeClass('hidden')
-        .addClass('flex');
-
-    $('#servicesModal')
-        .attr('data-booking-id', bookingId);
-
+    $("#servicesModal").attr("data-booking-id", bookingId);
 }
 
 /*
@@ -340,11 +384,7 @@ function openServicesModal(bookingId) {
 */
 
 function closeServicesModal() {
-
-    $('#servicesModal')
-        .removeClass('flex')
-        .addClass('hidden');
-
+    $("#servicesModal").removeClass("flex").addClass("hidden");
 }
 
 /*
@@ -353,14 +393,10 @@ function closeServicesModal() {
 |--------------------------------------------------------------------------
 */
 
-$(document).on('click', function (e) {
-
-    if ($(e.target).attr('id') === 'servicesModal') {
-
+$(document).on("click", function (e) {
+    if ($(e.target).attr("id") === "servicesModal") {
         closeServicesModal();
-
     }
-
 });
 
 /*
@@ -370,13 +406,9 @@ $(document).on('click', function (e) {
 */
 
 $(document).keyup(function (e) {
-
-    if (e.key === 'Escape') {
-
+    if (e.key === "Escape") {
         closeServicesModal();
-
     }
-
 });
 
 /*
@@ -385,14 +417,10 @@ $(document).keyup(function (e) {
 |--------------------------------------------------------------------------
 */
 
-$(document).on('submit', '.checkoutForm', function (e) {
-
-    if (!confirm('Are you sure you want to check out this guest?')) {
-
+$(document).on("submit", ".checkoutForm", function (e) {
+    if (!confirm("Are you sure you want to check out this guest?")) {
         e.preventDefault();
-
     }
-
 });
 
 /*
@@ -402,17 +430,15 @@ $(document).on('submit', '.checkoutForm', function (e) {
 */
 
 function resetFilters() {
+    $("#searchBooking").val("");
 
-    $('#searchBooking').val('');
+    $("#buildingFilter").val("");
 
-    $('#buildingFilter').val('');
-
-    $('#floorFilter').val('');
+    $("#floorFilter").val("");
 
     currentPage = 1;
 
     loadCurrentStays();
-
 }
 
 /*
@@ -422,9 +448,7 @@ function resetFilters() {
 */
 
 function refreshCurrentStays() {
-
     loadCurrentStays();
-
 }
 
 /*
@@ -434,9 +458,7 @@ function refreshCurrentStays() {
 */
 
 setInterval(function () {
-
     loadCurrentStays();
-
 }, 60000);
 
 /*
@@ -446,12 +468,11 @@ setInterval(function () {
 */
 
 function showLoading() {
-
-    $('#currentStayTable').html(`
+    $("#currentStayTable").html(`
 
         <tr>
 
-            <td colspan="9" class="text-center py-12 text-zinc-500">
+            <td colspan="10" class="text-center py-12 text-zinc-500">
 
                 <i class="fa-solid fa-spinner fa-spin text-xl mr-2"></i>
 
@@ -462,7 +483,6 @@ function showLoading() {
         </tr>
 
     `);
-
 }
 
 /*
@@ -472,12 +492,11 @@ function showLoading() {
 */
 
 function showEmptyState() {
-
-    $('#currentStayTable').html(`
+    $("#currentStayTable").html(`
 
         <tr>
 
-            <td colspan="9" class="py-16 text-center">
+            <td colspan="10" class="py-16 text-center">
 
                 <i class="fa-solid fa-bed text-5xl text-zinc-300 mb-4"></i>
 
@@ -492,7 +511,6 @@ function showEmptyState() {
         </tr>
 
     `);
-
 }
 
 /*
@@ -502,12 +520,11 @@ function showEmptyState() {
 */
 
 function showAjaxError() {
-
-    $('#currentStayTable').html(`
+    $("#currentStayTable").html(`
 
         <tr>
 
-            <td colspan="9" class="py-16 text-center text-red-500">
+            <td colspan="10" class="py-16 text-center text-red-500">
 
                 <i class="fa-solid fa-circle-exclamation text-4xl mb-3"></i>
 
@@ -520,5 +537,4 @@ function showAjaxError() {
         </tr>
 
     `);
-
 }

@@ -207,6 +207,10 @@
                             </th>
 
                             <th class="px-5 py-4 text-left">
+                                Extended Check Out
+                            </th>
+
+                            <th class="px-5 py-4 text-left">
                                 Balance
                             </th>
 
@@ -226,7 +230,7 @@
 
                         <tr>
 
-                            <td colspan="9" class="py-12 text-center text-zinc-500">
+                            <td colspan="10" class="py-12 text-center text-zinc-500">
 
                                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>
 
@@ -265,6 +269,8 @@
             checkoutUrl: "{{ route('dashboard.bookings.checkout', ':id') }}",
 
             serviceUrl: "{{ route('dashboard.bookings.services', ':id') }}",
+
+            expectedCheckoutUrl: "{{ route('dashboard.bookings.expected-checkout', ':id') }}",
 
             csrf: "{{ csrf_token() }}"
 

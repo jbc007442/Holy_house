@@ -25,6 +25,8 @@ return new class extends Migration
 
             // Stay Details
             $table->date('check_in');
+            $table->date('expected_check_out')->nullable();
+            $table->unsignedSmallInteger('expected_stay_days')->default(1);
             $table->date('check_out')->nullable();
 
             // Guests
