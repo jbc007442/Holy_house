@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Dashboard\Property\BuildingController;
+use App\Http\Controllers\Dashboard\Property\BuildingExpenseController;
 use App\Http\Controllers\Dashboard\Property\RoomController;
 use App\Http\Controllers\Dashboard\Bookings\BookingController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -26,6 +27,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', fn() => view('website.base'));
+Route::get('/services', fn() => view('website.services'));
+Route::get('/about', fn() => view('website.about'));
+Route::get('/contact', fn() => view('website.contact'));
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +97,38 @@ Route::middleware('auth')
         Route::delete('/buildings/{building}', [BuildingController::class, 'destroy'])->name('property.buildings.destroy');
         Route::get('/building-floors/{building}', [BuildingController::class, 'getFloors'])->name('property.buildings.get-floors');
 
+    // Building Expenses
+
+    Route::get('/building-expenses', [
+        BuildingExpenseController::class,
+        'index'
+    ])->name('property.building-expenses');
+
+    Route::get('/building-expenses/create', [
+        BuildingExpenseController::class,
+        'create'
+    ])->name('property.building-expenses.create');
+
+    Route::post('/building-expenses', [
+        BuildingExpenseController::class,
+        'store'
+    ])->name('property.building-expenses.store');
+
+    Route::get('/building-expenses/{buildingExpense}/edit', [
+        BuildingExpenseController::class,
+        'edit'
+    ])->name('property.building-expenses.edit');
+
+    Route::put('/building-expenses/{buildingExpense}', [
+        BuildingExpenseController::class,
+        'update'
+    ])->name('property.building-expenses.update');
+
+    Route::delete('/building-expenses/{buildingExpense}', [
+        BuildingExpenseController::class,
+        'destroy'
+    ])->name('property.building-expenses.destroy');
+
         // Rooms
 
         Route::get('/rooms', [RoomController::class, 'index'])->name('property.rooms');
@@ -129,6 +165,7 @@ Route::middleware('auth')
         Route::patch('/bookings/services/{service}', [BookingController::class, 'updateService'])->name('bookings.services.update');
         Route::patch('/bookings/{booking}/invoice', [BookingController::class, 'updateInvoiceDetails'])->name('bookings.invoice.update');
         Route::get('/bookings/{booking}/details', [BookingController::class, 'details'])->name('bookings.details');
+
 
         /*
         |--------------------------------------------------------------------------

@@ -68,6 +68,12 @@
                     Buildings
                 </a>
 
+                <a href="{{ route('dashboard.property.building-expenses') }}"
+                    class="sidebar-link {{ request()->routeIs('dashboard.property.building-expenses*') ? 'text-amber-600 font-semibold' : '' }}">
+                    <i class="fa-solid fa-money-bill-wave w-4 mr-2"></i>
+                    Building Expense
+                </a>
+
                 <a href="{{ route('dashboard.property.rooms') }}"
                     class="sidebar-link {{ request()->routeIs('dashboard.property.rooms') ? 'text-amber-600 font-semibold' : '' }}">
                     <i class="fa-solid fa-door-open w-4 mr-2"></i>
