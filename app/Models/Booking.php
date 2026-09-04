@@ -30,6 +30,7 @@ class Booking extends Model
         'complimentary_amount',
         'total_amount',
         'discount',
+        'late_checkout_fee',
 
         // Payment
         'paid_amount',
@@ -68,6 +69,7 @@ class Booking extends Model
         'complimentary_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'discount' => 'decimal:2',
+        'late_checkout_fee' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'balance_amount' => 'decimal:2',
     ];

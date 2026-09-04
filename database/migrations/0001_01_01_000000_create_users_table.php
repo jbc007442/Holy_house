@@ -26,7 +26,11 @@ return new class extends Migration
             $table->string('email')->unique();
 
             $table->enum('role', [
+                'superadmin',
                 'admin',
+                'receptionist',
+                'housekeeping',
+                'storemanager',
                 'user',
             ])->default('user');
 

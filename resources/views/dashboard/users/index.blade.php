@@ -90,82 +90,155 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+
             loadUsers();
 
             $("#search").on("keyup", function() {
                 loadUsers($(this).val());
             });
+
         });
+
 
         // Load Users
         function loadUsers(search = "") {
+
             $("#usersTable").html(`
-        <tr>
-            <td colspan="5" class="text-center py-8 text-zinc-500">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-                Loading...
-            </td>
-        </tr>
-    `);
+            <tr>
+                <td colspan="5" class="text-center py-8 text-zinc-500">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+                    Loading...
+                </td>
+            </tr>
+        `);
 
             $.ajax({
+
                 url: "{{ route('dashboard.users.index') }}",
 
                 type: "GET",
 
                 data: {
                     ajax: 1,
-                    search: search,
-                },
-
-                beforeSend: function() {
-                    console.log("Loading users...");
+                    search: search
                 },
 
                 success: function(response) {
-                    console.log("Success");
-                    console.log(response);
 
                     $("#usersTable").html(response);
+
                 },
 
-                error: function(xhr, status, error) {
-                    console.log("AJAX Error");
-                    console.log("Status:", xhr.status);
-                    console.log("Error:", error);
+                error: function(xhr) {
+
                     console.log(xhr.responseText);
 
                     $("#usersTable").html(`
-                <tr>
-                    <td colspan="5" class="text-center py-8 text-red-600">
-                        Failed to load users.<br>
-                        HTTP ${xhr.status}
-                    </td>
-                </tr>
-            `);
-                },
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-red-600">
+                            Failed to load users.<br>
+                            HTTP ${xhr.status}
+                        </td>
+                    </tr>
+                `);
+
+                }
+
             });
+
         }
+
 
         // Delete Confirmation
         $(document).on("submit", ".delete-form", function(e) {
+
             e.preventDefault();
 
             const form = this;
 
             Swal.fire({
+
                 title: "Delete User?",
+
                 text: "This action cannot be undone.",
+
                 icon: "warning",
+
                 showCancelButton: true,
+
                 confirmButtonText: "Delete",
+
                 cancelButtonText: "Cancel",
+
                 confirmButtonColor: "#dc2626",
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
+
+                reverseButtons: true,
+
+                allowOutsideClick: false,
+
+                allowEscapeKey: false
+
+            }).then(function(result) {
+
+                if (!result.isConfirmed) {
+                    return;
                 }
+
+                $.ajax({
+
+                    url: form.action,
+
+                    type: "POST",
+
+                    data: $(form).serialize(),
+
+                    success: function(response) {
+
+                        Swal.fire({
+
+                            title: "Deleted!",
+
+                            text: "User deleted successfully.",
+
+                            icon: "success",
+
+                            timer: 1500,
+
+                            showConfirmButton: false
+
+                        });
+
+                        // Reload table
+                        loadUsers($("#search").val());
+
+                    },
+
+                    error: function(xhr) {
+
+                        console.log("Delete Error:", xhr.responseText);
+
+                        let message = "Unable to delete user.";
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+
+                        Swal.fire({
+
+                            title: "Error",
+
+                            text: message,
+
+                            icon: "error"
+
+                        });
+
+                    }
+
+                });
+
             });
+
         });
     </script>
 @endpush

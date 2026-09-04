@@ -130,6 +130,20 @@
 
                         </div>
 
+                        <!-- Late Checkout Fee -->
+                        <div class="flex justify-between items-center border-b pb-2">
+
+                            <span class="text-zinc-500 font-medium">
+                                Late Checkout Fee
+                            </span>
+
+                            <input type="number" name="late_checkout_fee"
+                                value="{{ old('late_checkout_fee', $booking->late_checkout_fee ?? 0) }}" min="0"
+                                step="0.01" placeholder="0.00"
+                                class="w-44 rounded-lg border border-zinc-300 px-3 py-2 text-right">
+
+                        </div>
+
                         <!-- Discount Remark -->
                         <div class="flex justify-between items-start border-b pb-2">
 

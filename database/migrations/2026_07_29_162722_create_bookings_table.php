@@ -81,6 +81,8 @@ return new class extends Migration
 
             $table->decimal('discount', 10, 2)->default(0);
 
+            $table->decimal('late_checkout_fee', 10, 2)->default(0);
+
             // Remarks
             $table->text('discount_remark')->nullable();
 

@@ -38,6 +38,15 @@ class Room extends Model
 
 
     /**
+     * Get housekeepingMessages.
+     */
+    public function housekeepingMessages()
+    {
+        return $this->hasMany(HousekeepingMessage::class);
+    }
+
+
+    /**
      * Audit 
      */
     public function creator()

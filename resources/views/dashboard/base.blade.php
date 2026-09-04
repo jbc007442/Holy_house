@@ -94,6 +94,7 @@
 
     <!-- jQuery -->
     <script src="{{ asset('js/jquery.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/country-select-js@2.1.0/build/js/countrySelect.min.js"></script>
     <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>

@@ -13,8 +13,8 @@
         <div class="overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm">
 
             <!-- ===========================
-                                                                                         HEADER
-                                                                                    ============================ -->
+                                                                                             HEADER
+                                                                                        ============================ -->
 
             <div class="border-b border-zinc-300 px-6 py-5">
 
@@ -63,8 +63,8 @@
             </div>
 
             <!-- ===========================
-                                                                                         CUSTOMER & INVOICE
-                                                                                    ============================ -->
+                                                                                             CUSTOMER & INVOICE
+                                                                                        ============================ -->
 
             <div class="grid grid-cols-2 gap-6 border-b border-zinc-300 bg-zinc-50 px-6 py-4">
 
@@ -302,8 +302,8 @@
             </div>
 
             <!-- ===========================
-                                                                                         CHARGES TABLE
-                                                                                    ============================ -->
+                                                                                             CHARGES TABLE
+                                                                                        ============================ -->
 
             <div class="p-5">
 
@@ -408,8 +408,8 @@
 
             </div>
             <!-- ===========================
-                                                    TOTALS
-                                        ============================ -->
+                                                        TOTALS
+                                            ============================ -->
 
             @php
                 $stayDays = max(
@@ -421,9 +421,11 @@
 
                 $serviceTotal = $booking->services->where('type', 'chargeable')->sum('total_amount');
 
+                $lateCheckoutFee = $booking->late_checkout_fee ?? 0;
+
                 $discount = $booking->discount ?? 0;
 
-                $subtotal = $roomRentTotal + $serviceTotal - $discount;
+                $subtotal = $roomRentTotal + $serviceTotal + $lateCheckoutFee - $discount;
 
                 $guestState = trim($booking->guests->first()?->state ?? '');
 
@@ -449,6 +451,14 @@
                 <div class="ml-auto w-full max-w-sm">
 
                     <table class="w-full text-xs">
+                        <tr>
+                            <td class="py-2 text-zinc-600">
+                                Late Checkout Fee
+                            </td>
+                            <td class="py-2 text-right">
+                                ₹{{ number_format($lateCheckoutFee, 2) }}
+                            </td>
+                        </tr>
                         <tr>
                             <td class="py-2 text-zinc-600">
                                 Discount
@@ -510,8 +520,8 @@
             </div>
 
             <!-- ===========================
-                                                                                         AMOUNT IN WORDS
-                                                                                    ============================ -->
+                                                                                             AMOUNT IN WORDS
+                                                                                        ============================ -->
 
             <div class="border-t border-zinc-300 px-5 py-4">
                 <div class="flex items-start justify-between gap-4">
@@ -538,8 +548,8 @@
             </div>
 
             <!-- ===========================
-                                                                                         NOTES & SIGNATURE
-                                                                                    ============================ -->
+                                                                                             NOTES & SIGNATURE
+                                                                                        ============================ -->
 
             <div class="grid grid-cols-2 gap-8 border-t border-zinc-300 px-5 py-5">
 
@@ -588,8 +598,8 @@
         </div>
 
         <!-- ===========================
-                                                                                     ACTION BUTTONS
-                                                                                ============================ -->
+                                                                                         ACTION BUTTONS
+                                                                                    ============================ -->
 
         <div class="mt-5 flex justify-end gap-3 print:hidden">
 

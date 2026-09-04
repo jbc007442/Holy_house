@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\LoginHistory;
+use App\Models\Building;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -43,11 +44,43 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if the user is a super administrator.
+     */
+    public function isSuperadmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
+    /**
      * Check if the user is an administrator.
      */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Check if the user is a receptionist.
+     */
+    public function isReceptionist(): bool
+    {
+        return $this->role === 'receptionist';
+    }
+
+    /**
+     * Check if the user is housekeeping staff.
+     */
+    public function isHousekeeping(): bool
+    {
+        return $this->role === 'housekeeping';
+    }
+
+    /**
+     * Check if the user is a store manager.
+     */
+    public function isStoreManager(): bool
+    {
+        return $this->role === 'storemanager';
     }
 
     /**
@@ -72,6 +105,14 @@ class User extends Authenticatable
     public function isInactive(): bool
     {
         return $this->status === 'inactive';
+    }
+
+    /**
+     * Get all buildings assigned to the user.
+     */
+    public function buildings()
+    {
+        return $this->belongsToMany(Building::class);
     }
 
     /**

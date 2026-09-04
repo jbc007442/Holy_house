@@ -7,14 +7,7 @@ use App\Models\User;
 use App\Models\Building;
 use App\Models\Room;
 use App\Models\Booking;
-use App\Models\BookingGuest;
-use App\Models\BookingService;
-use App\Models\Item;
-use App\Models\PurchaseHistory;
-use App\Models\StockMovement;
-use App\Models\Invoice;
 use App\Models\LoginHistory;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -33,6 +26,7 @@ class DashboardController extends Controller
 
         return view('dashboard.profile');
     }
+
     /**
      * Dashboard Home
      */
@@ -44,88 +38,236 @@ class DashboardController extends Controller
     /**
      * Dashboard Data (AJAX)
      */
-
     public function data(Request $request)
     {
+        $user = auth()->user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Accessible Building IDs
+        |--------------------------------------------------------------------------
+        */
+
+        $buildingIds = null;
+
+        if (!$user->isSuperadmin() && !$user->isAdmin()) {
+
+            $buildingIds = $user->buildings()
+                ->pluck('buildings.id');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Selected Building
+        |--------------------------------------------------------------------------
+        */
+
+        $selectedBuildingId = $request->filled('building_id')
+            ? (int) $request->building_id
+            : null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Selected Building Access
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $selectedBuildingId !== null &&
+            $buildingIds !== null &&
+            !$buildingIds->contains($selectedBuildingId)
+        ) {
+
+            abort(
+                403,
+                'You do not have access to this building.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Login History
+        |--------------------------------------------------------------------------
+        */
+
         $loginHistory = LoginHistory::with('user')
             ->latest('login_at')
             ->paginate(10);
 
         /*
-    |--------------------------------------------------------------------------
-    | Revenue Query
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Revenue Query
+        |--------------------------------------------------------------------------
+        */
 
         $revenue = Booking::query();
 
-        if ($request->filled('building_id')) {
+        if ($selectedBuildingId !== null) {
 
-            $revenue->whereHas('room', function ($q) use ($request) {
+            $revenue->whereHas('room', function ($q) use ($selectedBuildingId) {
 
-                $q->where('building_id', $request->building_id);
+                $q->where(
+                    'building_id',
+                    $selectedBuildingId
+                );
+            });
+
+        } elseif ($buildingIds !== null) {
+
+            $revenue->whereHas('room', function ($q) use ($buildingIds) {
+
+                $q->whereIn(
+                    'building_id',
+                    $buildingIds
+                );
             });
         }
 
         /*
-    |--------------------------------------------------------------------------
-    | Current Guests Query
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Current Guests Query
+        |--------------------------------------------------------------------------
+        */
 
-        $bookingQuery = Booking::where('status', 'checked_in');
+        $bookingQuery = Booking::query()
+            ->where('status', 'checked_in');
 
-        if ($request->filled('building_id')) {
+        if ($selectedBuildingId !== null) {
 
-            $bookingQuery->whereHas('room', function ($q) use ($request) {
+            $bookingQuery->whereHas('room', function ($q) use ($selectedBuildingId) {
 
-                $q->where('building_id', $request->building_id);
+                $q->where(
+                    'building_id',
+                    $selectedBuildingId
+                );
+            });
+
+        } elseif ($buildingIds !== null) {
+
+            $bookingQuery->whereHas('room', function ($q) use ($buildingIds) {
+
+                $q->whereIn(
+                    'building_id',
+                    $buildingIds
+                );
             });
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Room Query
+        |--------------------------------------------------------------------------
+        */
+
+        $roomQuery = Room::query();
+
+        if ($selectedBuildingId !== null) {
+
+            $roomQuery->where(
+                'building_id',
+                $selectedBuildingId
+            );
+
+        } elseif ($buildingIds !== null) {
+
+            $roomQuery->whereIn(
+                'building_id',
+                $buildingIds
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Today's Expected Check-Out
+        |--------------------------------------------------------------------------
+        */
+
+        $checkoutQuery = Booking::query()
+            ->where('status', 'checked_in')
+            ->whereDate(
+                'expected_check_out',
+                today()
+            );
+
+        if ($selectedBuildingId !== null) {
+
+            $checkoutQuery->whereHas('room', function ($q) use ($selectedBuildingId) {
+
+                $q->where(
+                    'building_id',
+                    $selectedBuildingId
+                );
+            });
+
+        } elseif ($buildingIds !== null) {
+
+            $checkoutQuery->whereHas('room', function ($q) use ($buildingIds) {
+
+                $q->whereIn(
+                    'building_id',
+                    $buildingIds
+                );
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Building Query
+        |--------------------------------------------------------------------------
+        */
+
+        $buildingQuery = Building::query();
+
+        if ($buildingIds !== null) {
+
+            $buildingQuery->whereIn(
+                'id',
+                $buildingIds
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Building List
+        |--------------------------------------------------------------------------
+        */
+
+        $buildingList = (clone $buildingQuery)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Statistics
+        |--------------------------------------------------------------------------
+        */
 
         return response()->json([
 
             'stats' => [
 
                 // Buildings
-                'buildings' => Building::count(),
+                'buildings' => $buildingQuery->count(),
 
                 // Revenue
                 'revenue' => $revenue->sum('room_rent'),
 
                 // Total Rooms
-                'rooms' => Room::when($request->filled('building_id'), function ($q) use ($request) {
-
-                    $q->where('building_id', $request->building_id);
-                })->count(),
+                'rooms' => (clone $roomQuery)->count(),
 
                 // Available Rooms
-                'available_rooms' => Room::when($request->filled('building_id'), function ($q) use ($request) {
-
-                    $q->where('building_id', $request->building_id);
-                })
+                'available_rooms' => (clone $roomQuery)
                     ->where('status', 'available')
                     ->count(),
 
                 // Running Rooms
-                'running_rooms' => Room::when($request->filled('building_id'), function ($q) use ($request) {
-
-                    $q->where('building_id', $request->building_id);
-                })
+                'running_rooms' => (clone $roomQuery)
                     ->where('status', 'running')
                     ->count(),
 
                 // Today's Expected Check-Out
-                'today_checkout' => Booking::when($request->filled('building_id'), function ($q) use ($request) {
-
-                    $q->whereHas('room', function ($room) use ($request) {
-
-                        $room->where('building_id', $request->building_id);
-                    });
-                })
-                    ->where('status', 'checked_in')
-                    ->whereDate('expected_check_out', today())
-                    ->count(),
+                'today_checkout' => $checkoutQuery->count(),
 
                 // Current Guests
                 'bookings' => $bookingQuery->count(),
@@ -135,9 +277,7 @@ class DashboardController extends Controller
 
             ],
 
-            'buildingList' => Building::select('id', 'name')
-                ->orderBy('name')
-                ->get(),
+            'buildingList' => $buildingList,
 
             'loginHistory' => $loginHistory->items(),
 
@@ -155,5 +295,4 @@ class DashboardController extends Controller
 
         ]);
     }
-
 }

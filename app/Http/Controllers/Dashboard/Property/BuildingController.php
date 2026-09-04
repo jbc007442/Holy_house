@@ -13,32 +13,87 @@ class BuildingController extends Controller
     /**
      * Display a listing of the resource.
      */
-
     public function index(Request $request)
     {
+        $user = auth()->user();
+
         if ($request->ajax()) {
 
-            $buildings = Building::withCount('rooms')
-                ->when($request->search, function ($query) use ($request) {
+            $query = Building::withCount('rooms');
 
-                    $query->where(function ($q) use ($request) {
+            /*
+            |--------------------------------------------------------------------------
+            | Building Access
+            |--------------------------------------------------------------------------
+            |
+            | Super Admin and Admin can see all buildings.
+            | Other users can only see their assigned buildings.
+            |
+            */
 
-                        $q->where('name', 'like', '%' . $request->search . '%')
-                            ->orWhere('code', 'like', '%' . $request->search . '%');
-                    });
-                })
+            if (!$user->isSuperadmin() && !$user->isAdmin()) {
+
+                $buildingIds = $user->buildings()
+                    ->pluck('buildings.id');
+
+                $query->whereIn('id', $buildingIds);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Search
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->filled('search')) {
+
+                $search = trim($request->search);
+
+                $query->where(function ($q) use ($search) {
+
+                    $q->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('code', 'like', '%' . $search . '%');
+                });
+            }
+
+            $buildings = $query
                 ->latest()
                 ->paginate(10);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Statistics
+            |--------------------------------------------------------------------------
+            */
+
+            $statsQuery = Building::query();
+
+            if (!$user->isSuperadmin() && !$user->isAdmin()) {
+
+                $buildingIds = $user->buildings()
+                    ->pluck('buildings.id');
+
+                $statsQuery->whereIn('id', $buildingIds);
+            }
+
+            $statsBuildingIds = $statsQuery->pluck('id');
+
+            $totalRooms = Room::whereIn(
+                'building_id',
+                $statsBuildingIds
+            )->count();
 
             return response()->json([
 
                 'stats' => [
 
-                    'totalBuildings' => Building::count(),
+                    'totalBuildings' => $statsQuery->count(),
 
-                    'activeBuildings' => Building::where('status', 'active')->count(),
+                    'activeBuildings' => (clone $statsQuery)
+                        ->where('status', 'active')
+                        ->count(),
 
-                    'totalRooms' => Room::count(),
+                    'totalRooms' => $totalRooms,
 
                 ],
 
@@ -48,15 +103,15 @@ class BuildingController extends Controller
 
                     'current_page' => $buildings->currentPage(),
 
-                    'last_page'    => $buildings->lastPage(),
+                    'last_page' => $buildings->lastPage(),
 
-                    'per_page'     => $buildings->perPage(),
+                    'per_page' => $buildings->perPage(),
 
-                    'total'        => $buildings->total(),
+                    'total' => $buildings->total(),
 
-                    'from'         => $buildings->firstItem(),
+                    'from' => $buildings->firstItem(),
 
-                    'to'           => $buildings->lastItem(),
+                    'to' => $buildings->lastItem(),
 
                 ],
 
@@ -65,8 +120,6 @@ class BuildingController extends Controller
 
         return view('dashboard.property.buildings.index');
     }
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -82,31 +135,31 @@ class BuildingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'code'        => 'required|string|max:50|unique:buildings,code',
-            'floors'      => 'required|array|min:1',
-            'floors.*'    => 'required|string|max:255',
-            'status'      => 'required|in:active,inactive',
-            'address'     => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:buildings,code',
+            'floors' => 'required|array|min:1',
+            'floors.*' => 'required|string|max:255',
+            'status' => 'required|in:active,inactive',
+            'address' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $building = Building::create([
-            'name'        => $validated['name'],
-            'code'        => $validated['code'],
-            'status'      => $validated['status'],
-            'address'     => $validated['address'] ?? null,
+            'name' => $validated['name'],
+            'code' => $validated['code'],
+            'status' => $validated['status'],
+            'address' => $validated['address'] ?? null,
             'description' => $validated['description'] ?? null,
-            'created_by'  => auth()->id(),
-            'updated_by'  => auth()->id(),
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
 
         foreach ($validated['floors'] as $index => $floor) {
 
             $building->floors()->create([
-                'name'       => $floor,
+                'name' => $floor,
                 'sort_order' => $index + 1,
-                'status'     => 'active',
+                'status' => 'active',
                 'created_by' => auth()->id(),
                 'updated_by' => auth()->id(),
             ]);
@@ -124,7 +177,12 @@ class BuildingController extends Controller
     {
         $building = Building::findOrFail($id);
 
-        return view('dashboard.property.buildings.show', compact('building'));
+        $this->checkBuildingAccess($building);
+
+        return view(
+            'dashboard.property.buildings.show',
+            compact('building')
+        );
     }
 
     /**
@@ -134,7 +192,12 @@ class BuildingController extends Controller
     {
         $building = Building::with('floors')->findOrFail($id);
 
-        return view('dashboard.property.buildings.edit', compact('building'));
+        $this->checkBuildingAccess($building);
+
+        return view(
+            'dashboard.property.buildings.edit',
+            compact('building')
+        );
     }
 
     /**
@@ -144,35 +207,35 @@ class BuildingController extends Controller
     {
         $building = Building::findOrFail($id);
 
+        $this->checkBuildingAccess($building);
+
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'code'        => 'required|string|max:50|unique:buildings,code,' . $building->id,
-            'floors'      => 'required|array|min:1',
-            'floors.*'    => 'required|string|max:255',
-            'status'      => 'required|in:active,inactive',
-            'address'     => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:buildings,code,' . $building->id,
+            'floors' => 'required|array|min:1',
+            'floors.*' => 'required|string|max:255',
+            'status' => 'required|in:active,inactive',
+            'address' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $building->update([
-            'name'        => $validated['name'],
-            'code'        => $validated['code'],
-            'status'      => $validated['status'],
-            'address'     => $validated['address'] ?? null,
+            'name' => $validated['name'],
+            'code' => $validated['code'],
+            'status' => $validated['status'],
+            'address' => $validated['address'] ?? null,
             'description' => $validated['description'] ?? null,
-            'updated_by'  => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
 
-        // Remove existing floors
         $building->floors()->delete();
 
-        // Add updated floors
         foreach ($validated['floors'] as $index => $floor) {
 
             $building->floors()->create([
-                'name'       => $floor,
+                'name' => $floor,
                 'sort_order' => $index + 1,
-                'status'     => 'active',
+                'status' => 'active',
                 'created_by' => auth()->id(),
                 'updated_by' => auth()->id(),
             ]);
@@ -190,11 +253,13 @@ class BuildingController extends Controller
     {
         $building = Building::findOrFail($id);
 
+        $this->checkBuildingAccess($building);
+
         $building->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Building deleted successfully.'
+            'message' => 'Building deleted successfully.',
         ]);
     }
 
@@ -203,6 +268,8 @@ class BuildingController extends Controller
      */
     public function getFloors(Building $building)
     {
+        $this->checkBuildingAccess($building);
+
         return response()->json(
             $building->floors()
                 ->where('status', 'active')
@@ -210,8 +277,40 @@ class BuildingController extends Controller
                 ->get([
                     'id',
                     'name',
-                    'sort_order'
+                    'sort_order',
                 ])
         );
+    }
+
+    /**
+     * Check whether the authenticated user can access the building.
+     */
+    private function checkBuildingAccess(Building $building): void
+    {
+        $user = auth()->user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Super Admin and Admin
+        |--------------------------------------------------------------------------
+        */
+
+        if ($user->isSuperadmin() || $user->isAdmin()) {
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Assigned Building Check
+        |--------------------------------------------------------------------------
+        */
+
+        $hasAccess = $user->buildings()
+            ->where('buildings.id', $building->id)
+            ->exists();
+
+        if (!$hasAccess) {
+            abort(403, 'You do not have access to this building.');
+        }
     }
 }

@@ -4,284 +4,362 @@
     lg:translate-x-0 lg:shadow-none flex flex-col">
 
     <div class="lg:hidden flex justify-end p-3 border-b border-zinc-200">
-
         <button id="close-sidebar" class="w-10 h-10 rounded-xl hover:bg-zinc-100 flex items-center justify-center">
-
             <i class="fa-solid fa-xmark text-xl"></i>
-
         </button>
-
     </div>
-
-
 
     <!-- Logo -->
     <div class="h-16 flex items-center justify-center border-b border-zinc-200 bg-zinc-50">
-
         <a href="{{ url('/') }}"
             class="flex items-center border border-4 justify-center transition-transform duration-300 hover:scale-105">
-
             <img src="{{ asset('images/logo.png') }}" alt="The Hostel House" class="h-10 w-auto object-contain">
-
         </a>
-
     </div>
+
+    @php
+        $role = auth()->user()->role;
+
+        $isSuperadmin = $role === 'superadmin';
+        $isAdmin = $role === 'admin';
+        $isReceptionist = $role === 'receptionist';
+        $isHousekeeping = $role === 'housekeeping';
+        $isStoremanager = $role === 'storemanager';
+
+        $canProperty = $isSuperadmin || $isAdmin || $isReceptionist;
+        $canAllProperty = $isSuperadmin || $isAdmin;
+
+        $canBookings = $isSuperadmin || $isAdmin || $isReceptionist;
+        $canInventory = $isSuperadmin || $isAdmin || $isStoremanager;
+        $canAccounts = $isSuperadmin || $isAdmin || $isReceptionist;
+        $canUsers = $isSuperadmin;
+    @endphp
 
     <div class="flex-1 overflow-y-auto px-3 py-4 space-y-2 custom-scrollbar">
 
-        <!-- Dashboard -->
+        {{-- ================= Dashboard ================= --}}
         <a href="{{ route('dashboard.index') }}"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-    {{ request()->routeIs('dashboard.index')
-        ? 'bg-amber-50 text-amber-700 border border-amber-200'
-        : 'hover:bg-zinc-100' }}">
+            {{ request()->routeIs('dashboard.index')
+                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                : 'hover:bg-zinc-100' }}">
+
             <i class="fa-solid fa-house w-5"></i>
             Dashboard
         </a>
 
-        <!-- ================= Property ================= -->
+
+        {{-- ================= Property / Rooms ================= --}}
 
         @php
             $propertyOpen = request()->routeIs('dashboard.property.*');
+
+            $canProperty = $isSuperadmin || $isAdmin || $isReceptionist || $isHousekeeping;
+            $canAllProperty = $isSuperadmin || $isAdmin;
         @endphp
 
-        <div>
+        @if ($canProperty)
 
-            <button
-                class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium {{ $propertyOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
+            {{-- Housekeeping --}}
+            @if ($isHousekeeping)
 
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-building w-5 text-blue-600"></i>
-                    <span>Property</span>
-                </div>
+                {{-- Message --}}
+                <a href="{{ route('dashboard.property.housekeeping.alert') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+            {{ request()->routeIs('dashboard.property.housekeeping.alert')
+                ? 'bg-red-50 text-red-700 border border-red-200'
+                : 'hover:bg-zinc-100' }}">
 
-                <i
-                    class="fa-solid fa-chevron-down text-xs transition-transform {{ $propertyOpen ? 'rotate-180' : '' }}"></i>
+                    <i class="fa-solid fa-message w-5 text-red-500"></i>
 
-            </button>
+                    <span>Message</span>
 
-            <div class="dropdown-content {{ $propertyOpen ? '' : 'hidden' }} ml-4 mt-2 border-l pl-4 space-y-1">
-
-                <a href="{{ route('dashboard.property.buildings') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.property.buildings*') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-building w-4 mr-2"></i>
-                    Buildings
                 </a>
 
-                <a href="{{ route('dashboard.property.building-expenses') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.property.building-expenses*') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-money-bill-wave w-4 mr-2"></i>
-                    Building Expense
-                </a>
-
-                <a href="{{ route('dashboard.property.rooms') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.property.rooms') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-door-open w-4 mr-2"></i>
-                    Rooms
-                </a>
-
+                {{-- Room Status --}}
                 <a href="{{ route('dashboard.property.room-status') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.property.room-status') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-bed w-4 mr-2"></i>
-                    Room Status
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+            {{ request()->routeIs('dashboard.property.room-status')
+                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                : 'hover:bg-zinc-100' }}">
+
+                    <i class="fa-solid fa-bed w-5 text-blue-600"></i>
+
+                    <span>Room Status</span>
+
                 </a>
+            @else
+                {{-- Admin / Superadmin / Receptionist --}}
+                <div>
 
-            </div>
+                    <button
+                        class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium
+                {{ $propertyOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
 
-        </div>
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-building w-5 text-blue-600"></i>
+                            <span>Property</span>
+                        </div>
 
-        <!-- ================= Bookings ================= -->
+                        <i
+                            class="fa-solid fa-chevron-down text-xs transition-transform
+                    {{ $propertyOpen ? 'rotate-180' : '' }}"></i>
 
-        @php
-            $bookingsOpen = request()->routeIs('dashboard.bookings.*');
-        @endphp
+                    </button>
 
-        <div>
+                    <div
+                        class="dropdown-content {{ $propertyOpen ? '' : 'hidden' }}
+                ml-4 mt-2 border-l pl-4 space-y-1">
 
-            <button
-                class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium {{ $bookingsOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
+                        {{-- Buildings --}}
+                        @if ($canAllProperty || $isReceptionist)
+                            <a href="{{ route('dashboard.property.buildings') }}"
+                                class="sidebar-link {{ request()->routeIs('dashboard.property.buildings*') ? 'text-amber-600 font-semibold' : '' }}">
 
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-calendar-days w-5 text-green-600"></i>
-                    <span>Bookings</span>
+                                <i class="fa-solid fa-building w-4 mr-2"></i>
+                                Buildings
+
+                            </a>
+                        @endif
+
+                        {{-- Building Expense --}}
+                        @if ($canAllProperty)
+                            <a href="{{ route('dashboard.property.building-expenses') }}"
+                                class="sidebar-link {{ request()->routeIs('dashboard.property.building-expenses*') ? 'text-amber-600 font-semibold' : '' }}">
+
+                                <i class="fa-solid fa-money-bill-wave w-4 mr-2"></i>
+                                Building Expense
+
+                            </a>
+                        @endif
+
+                        {{-- Rooms --}}
+                        @if ($canAllProperty || $isReceptionist)
+                            <a href="{{ route('dashboard.property.rooms') }}"
+                                class="sidebar-link {{ request()->routeIs('dashboard.property.rooms') ? 'text-amber-600 font-semibold' : '' }}">
+
+                                <i class="fa-solid fa-door-open w-4 mr-2"></i>
+                                Rooms
+
+                            </a>
+                        @endif
+
+                        {{-- Room Status --}}
+                        @if ($canAllProperty || $isReceptionist)
+                            <a href="{{ route('dashboard.property.room-status') }}"
+                                class="sidebar-link {{ request()->routeIs('dashboard.property.room-status') ? 'text-amber-600 font-semibold' : '' }}">
+
+                                <i class="fa-solid fa-bed w-4 mr-2"></i>
+                                Room Status
+
+                            </a>
+                        @endif
+
+                    </div>
+
                 </div>
 
-                <i
-                    class="fa-solid fa-chevron-down text-xs transition-transform {{ $bookingsOpen ? 'rotate-180' : '' }}"></i>
+            @endif
 
-            </button>
+        @endif
 
-            <div class="dropdown-content {{ $bookingsOpen ? '' : 'hidden' }} ml-4 mt-2 border-l pl-4 space-y-1">
 
-                <a href="{{ route('dashboard.bookings.create') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.bookings.create') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-plus w-4 mr-2"></i>
-                    New Booking
-                </a>
+        {{-- ================= Bookings ================= --}}
+        @if ($canBookings)
+            @php
+                $bookingsOpen = request()->routeIs('dashboard.bookings.*');
+            @endphp
 
-                <a href="{{ route('dashboard.bookings.current-stays') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.bookings.current-stays') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-bed w-4 mr-2"></i>
-                    Current Stays
-                </a>
+            <div>
+                <button
+                    class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium
+                    {{ $bookingsOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
 
-                <a href="{{ route('dashboard.bookings.history') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.bookings.history') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-clock-rotate-left w-4 mr-2"></i>
-                    Booking History
-                </a>
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-calendar-days w-5 text-green-600"></i>
+                        <span>Bookings</span>
+                    </div>
 
-            </div>
+                    <i
+                        class="fa-solid fa-chevron-down text-xs transition-transform
+                        {{ $bookingsOpen ? 'rotate-180' : '' }}"></i>
+                </button>
 
-        </div>
+                <div
+                    class="dropdown-content {{ $bookingsOpen ? '' : 'hidden' }}
+                    ml-4 mt-2 border-l pl-4 space-y-1">
 
-        <!-- ================= Inventory ================= -->
+                    {{-- New Booking --}}
+                    <a href="{{ route('dashboard.bookings.create') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.bookings.create') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-plus w-4 mr-2"></i>
+                        New Booking
+                    </a>
 
-        @php
-            $inventoryOpen = request()->routeIs('dashboard.inventory.*');
-        @endphp
+                    {{-- Current Stays --}}
+                    <a href="{{ route('dashboard.bookings.current-stays') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.bookings.current-stays') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-bed w-4 mr-2"></i>
+                        Current Stays
+                    </a>
 
-        <div>
+                    {{-- Booking History --}}
+                    <a href="{{ route('dashboard.bookings.history') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.bookings.history') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-clock-rotate-left w-4 mr-2"></i>
+                        Booking History
+                    </a>
 
-            <button
-                class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium {{ $inventoryOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
-
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-boxes-stacked w-5 text-violet-600"></i>
-                    <span>Inventory</span>
                 </div>
-
-                <i
-                    class="fa-solid fa-chevron-down text-xs transition-transform {{ $inventoryOpen ? 'rotate-180' : '' }}"></i>
-
-            </button>
-
-            <div class="dropdown-content {{ $inventoryOpen ? '' : 'hidden' }} ml-4 mt-2 border-l pl-4 space-y-1">
-
-                <a href="{{ route('dashboard.inventory.items') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.inventory.items') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-box-open w-4 mr-2"></i>
-                    Items
-                </a>
-
-                <a href="{{ route('dashboard.inventory.stock-movement') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.inventory.stock-movement') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-arrow-right-arrow-left w-4 mr-2"></i>
-                    Stock Movement
-                </a>
-
-                <a href="{{ route('dashboard.inventory.stock-report') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.inventory.stock-report') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-chart-column w-4 mr-2"></i>
-                    Stock Report
-                </a>
-
             </div>
+        @endif
 
-        </div>
 
-        <!-- ================= Billing ================= -->
+        {{-- ================= Inventory ================= --}}
+        @if ($canInventory)
+            @php
+                $inventoryOpen = request()->routeIs('dashboard.inventory.*');
+            @endphp
 
-        @php
-            $accountsOpen = request()->routeIs('dashboard.accounts.*');
-        @endphp
+            <div>
+                <button
+                    class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium
+                    {{ $inventoryOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
 
-        <div>
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-boxes-stacked w-5 text-violet-600"></i>
+                        <span>Inventory</span>
+                    </div>
 
-            <button
-                class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium {{ $accountsOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
+                    <i
+                        class="fa-solid fa-chevron-down text-xs transition-transform
+                        {{ $inventoryOpen ? 'rotate-180' : '' }}"></i>
+                </button>
 
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-wallet w-5 text-emerald-600"></i>
-                    <span>Accounts</span>
+                <div
+                    class="dropdown-content {{ $inventoryOpen ? '' : 'hidden' }}
+                    ml-4 mt-2 border-l pl-4 space-y-1">
+
+                    {{-- Items --}}
+                    <a href="{{ route('dashboard.inventory.items') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.inventory.items') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-box-open w-4 mr-2"></i>
+                        Items
+                    </a>
+
+                    {{-- Stock Movement --}}
+                    <a href="{{ route('dashboard.inventory.stock-movement') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.inventory.stock-movement') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-arrow-right-arrow-left w-4 mr-2"></i>
+                        Stock Movement
+                    </a>
+
+                    {{-- Stock Report --}}
+                    <a href="{{ route('dashboard.inventory.stock-report') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.inventory.stock-report') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-chart-column w-4 mr-2"></i>
+                        Stock Report
+                    </a>
+
                 </div>
-
-                <i
-                    class="fa-solid fa-chevron-down text-xs transition-transform {{ $accountsOpen ? 'rotate-180' : '' }}"></i>
-
-            </button>
-
-            <div class="dropdown-content {{ $accountsOpen ? '' : 'hidden' }} ml-4 mt-2 border-l pl-4 space-y-1">
-
-                <a href="{{ route('dashboard.accounts.invoices') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.accounts.invoices') ? 'text-amber-600 font-semibold' : '' }}">
-                    <i class="fa-solid fa-file-invoice w-4 mr-2"></i>
-                    Invoices
-                </a>
-
             </div>
+        @endif
 
-        </div>
 
-        <!-- ================= Users ================= -->
+        {{-- ================= Accounts ================= --}}
+        @if ($canAccounts)
+            @php
+                $accountsOpen = request()->routeIs('dashboard.accounts.*');
+            @endphp
 
-        @php
-            $usersOpen = request()->routeIs('dashboard.users.*');
-        @endphp
+            <div>
+                <button
+                    class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium
+                    {{ $accountsOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
 
-        <div>
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-wallet w-5 text-emerald-600"></i>
+                        <span>Accounts</span>
+                    </div>
 
-            <button
-                class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium {{ $usersOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
+                    <i
+                        class="fa-solid fa-chevron-down text-xs transition-transform
+                        {{ $accountsOpen ? 'rotate-180' : '' }}"></i>
+                </button>
 
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-user-shield w-5 text-cyan-600"></i>
-                    <span>Users</span>
+                <div
+                    class="dropdown-content {{ $accountsOpen ? '' : 'hidden' }}
+                    ml-4 mt-2 border-l pl-4 space-y-1">
+
+                    <a href="{{ route('dashboard.accounts.invoices') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.accounts.invoices') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-file-invoice w-4 mr-2"></i>
+                        Invoices
+                    </a>
+
                 </div>
-
-                <i class="fa-solid fa-chevron-down text-xs transition-transform {{ $usersOpen ? 'rotate-180' : '' }}">
-                </i>
-
-            </button>
-
-            <div class="dropdown-content {{ $usersOpen ? '' : 'hidden' }} ml-4 mt-2 border-l pl-4 space-y-1">
-
-                <!-- Add User -->
-                <a href="{{ route('dashboard.users.create') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.users.create') ? 'text-amber-600 font-semibold' : '' }}">
-
-                    <i class="fa-solid fa-user-plus w-4 mr-2"></i>
-                    Add User
-
-                </a>
-
-                <!-- Manage Users -->
-                <a href="{{ route('dashboard.users.index') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.users.index') || request()->routeIs('dashboard.users.edit') || request()->routeIs('dashboard.users.show') ? 'text-amber-600 font-semibold' : '' }}">
-
-                    <i class="fa-solid fa-users w-4 mr-2"></i>
-                    Manage Users
-
-                </a>
-
-                <!-- Login History -->
-                {{-- <a href="{{ route('dashboard.login-history.index') }}"
-                    class="sidebar-link {{ request()->routeIs('dashboard.login-history.*') ? 'text-amber-600 font-semibold' : '' }}">
-
-                    <i class="fa-solid fa-clock-rotate-left w-4 mr-2"></i>
-                    Login History
-
-                </a> --}}
-
             </div>
+        @endif
 
-        </div>
 
+        {{-- ================= Users ================= --}}
+        @if ($canUsers)
+            @php
+                $usersOpen = request()->routeIs('dashboard.users.*');
+            @endphp
+
+            <div>
+                <button
+                    class="dropdown-btn w-full flex justify-between items-center px-3 py-2.5 rounded-xl text-sm font-medium
+                    {{ $usersOpen ? 'bg-zinc-100' : 'hover:bg-zinc-100' }}">
+
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-user-shield w-5 text-cyan-600"></i>
+                        <span>Users</span>
+                    </div>
+
+                    <i
+                        class="fa-solid fa-chevron-down text-xs transition-transform
+                        {{ $usersOpen ? 'rotate-180' : '' }}"></i>
+                </button>
+
+                <div
+                    class="dropdown-content {{ $usersOpen ? '' : 'hidden' }}
+                    ml-4 mt-2 border-l pl-4 space-y-1">
+
+                    {{-- Add User --}}
+                    <a href="{{ route('dashboard.users.create') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.users.create') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-user-plus w-4 mr-2"></i>
+                        Add User
+                    </a>
+
+                    {{-- Manage Users --}}
+                    <a href="{{ route('dashboard.users.index') }}"
+                        class="sidebar-link {{ request()->routeIs('dashboard.users.index') || request()->routeIs('dashboard.users.edit') || request()->routeIs('dashboard.users.show') ? 'text-amber-600 font-semibold' : '' }}">
+                        <i class="fa-solid fa-users w-4 mr-2"></i>
+                        Manage Users
+                    </a>
+
+                </div>
+            </div>
+        @endif
 
     </div>
 
-    <!-- Footer -->
 
+    <!-- Footer -->
     <div class="border-t border-zinc-200 p-4 bg-zinc-50">
 
         <form action="{{ route('logout') }}" method="POST">
             @csrf
 
             <button type="submit"
-                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all text-sm font-medium">
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
+                border border-zinc-200 bg-white hover:bg-red-50 hover:border-red-200
+                hover:text-red-600 transition-all text-sm font-medium">
 
                 <i class="fa-solid fa-right-from-bracket"></i>
-
                 Logout
 
             </button>
@@ -290,6 +368,7 @@
     </div>
 
 </aside>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -305,12 +384,19 @@
 
                 // Close all other dropdowns
                 document.querySelectorAll('.dropdown-content').forEach(item => {
+
                     if (item !== content) {
+
                         item.classList.add('hidden');
-                        const otherIcon = item.previousElementSibling.querySelector(
-                            '.fa-chevron-down');
+
+                        const otherIcon =
+                            item.previousElementSibling.querySelector(
+                                '.fa-chevron-down'
+                            );
+
                         otherIcon?.classList.remove('rotate-180');
                     }
+
                 });
 
                 // Toggle current dropdown

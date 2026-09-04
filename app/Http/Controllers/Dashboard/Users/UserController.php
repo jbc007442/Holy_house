@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard\Users;
 
 use App\Http\Controllers\Controller;
+use App\Models\Building;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,11 +12,20 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
     /**
+     * Available user roles.
+     */
+    private const ROLES = [
+        'superadmin',
+        'admin',
+        'receptionist',
+        'housekeeping',
+        'storemanager',
+        'user',
+    ];
+
+    /**
      * Display a listing of users.
      */
-
-
-
     public function index(Request $request)
     {
         $users = User::query();
@@ -27,7 +37,10 @@ class UserController extends Controller
             });
         }
 
-        $users = $users->latest()->get();
+        $users = $users
+            ->with('buildings')
+            ->latest()
+            ->get();
 
         if ($request->ajax()) {
             return view('dashboard.users.ajax.table', compact('users'));
@@ -36,14 +49,16 @@ class UserController extends Controller
         return view('dashboard.users.index');
     }
 
-  
-
     /**
      * Show the form for creating a new user.
      */
     public function create()
     {
-        return view('dashboard.users.create');
+        $buildings = Building::query()
+            ->orderBy('name')
+            ->get();
+
+        return view('dashboard.users.create', compact('buildings'));
     }
 
     /**
@@ -52,20 +67,33 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'                  => ['required', 'string', 'max:255'],
-            'email'                 => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password'              => ['required', 'confirmed', 'min:8'],
-            'role'                  => ['required', Rule::in(['admin', 'user'])],
-            'status'                => ['required', Rule::in(['active', 'inactive'])],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'confirmed', 'min:8'],
+            'role'     => ['required', Rule::in(self::ROLES)],
+            'status'   => ['required', Rule::in(['active', 'inactive'])],
+
+            'building_ids' => ['nullable', 'array'],
+            'building_ids.*' => [
+                'integer',
+                'exists:buildings,id',
+            ],
         ]);
 
-        User::create([
-            'name'      => $validated['name'],
-            'email'     => $validated['email'],
-            'password'  => Hash::make($validated['password']),
-            'role'      => $validated['role'],
-            'status'    => $validated['status'],
+        $user = User::create([
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role'     => $validated['role'],
+            'status'   => $validated['status'],
         ]);
+
+        /*
+         * Assign buildings to the user.
+         */
+        $user->buildings()->sync(
+            $validated['building_ids'] ?? []
+        );
 
         return redirect()
             ->route('dashboard.users.index')
@@ -77,6 +105,8 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        $user->load('buildings');
+
         return view('dashboard.users.show', compact('user'));
     }
 
@@ -85,7 +115,16 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('dashboard.users.edit', compact('user'));
+        $buildings = Building::query()
+            ->orderBy('name')
+            ->get();
+
+        $user->load('buildings');
+
+        return view(
+            'dashboard.users.edit',
+            compact('user', 'buildings')
+        );
     }
 
     /**
@@ -94,16 +133,22 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name'      => ['required', 'string', 'max:255'],
-            'email'     => [
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => [
                 'required',
                 'email',
                 'max:255',
                 Rule::unique('users')->ignore($user->id),
             ],
-            'role'      => ['required', Rule::in(['admin', 'user'])],
-            'status'    => ['required', Rule::in(['active', 'inactive'])],
-            'password'  => ['nullable', 'confirmed', 'min:8'],
+            'role'     => ['required', Rule::in(self::ROLES)],
+            'status'   => ['required', Rule::in(['active', 'inactive'])],
+            'password' => ['nullable', 'confirmed', 'min:8'],
+
+            'building_ids' => ['nullable', 'array'],
+            'building_ids.*' => [
+                'integer',
+                'exists:buildings,id',
+            ],
         ]);
 
         $user->name = $validated['name'];
@@ -117,6 +162,18 @@ class UserController extends Controller
 
         $user->save();
 
+        /*
+         * Update building assignments.
+         *
+         * sync() will:
+         * - add newly selected buildings
+         * - remove unselected buildings
+         * - keep existing selected buildings
+         */
+        $user->buildings()->sync(
+            $validated['building_ids'] ?? []
+        );
+
         return redirect()
             ->route('dashboard.users.index')
             ->with('success', 'User updated successfully.');
@@ -129,7 +186,10 @@ class UserController extends Controller
     {
         // Prevent deleting yourself
         if (auth()->id() === $user->id) {
-            return back()->with('error', 'You cannot delete your own account.');
+            return back()->with(
+                'error',
+                'You cannot delete your own account.'
+            );
         }
 
         $user->delete();
@@ -139,9 +199,8 @@ class UserController extends Controller
             ->with('success', 'User deleted successfully.');
     }
 
-
     /**
-     * toggle user 
+     * Toggle user status.
      */
     public function toggleStatus(User $user)
     {
@@ -151,6 +210,9 @@ class UserController extends Controller
 
         $user->save();
 
-        return back()->with('success', 'User status updated successfully.');
+        return back()->with(
+            'success',
+            'User status updated successfully.'
+        );
     }
 }
