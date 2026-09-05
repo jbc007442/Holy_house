@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Building;
 use App\Models\Room;
 use App\Models\Booking;
+use App\Models\Invoice;
 use App\Models\LoginHistory;
 use Illuminate\Http\Request;
 
@@ -100,21 +101,20 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $revenue = Booking::query();
+        $revenue = Invoice::query();
 
         if ($selectedBuildingId !== null) {
 
-            $revenue->whereHas('room', function ($q) use ($selectedBuildingId) {
+            $revenue->whereHas('booking.room', function ($q) use ($selectedBuildingId) {
 
                 $q->where(
                     'building_id',
                     $selectedBuildingId
                 );
             });
-
         } elseif ($buildingIds !== null) {
 
-            $revenue->whereHas('room', function ($q) use ($buildingIds) {
+            $revenue->whereHas('booking.room', function ($q) use ($buildingIds) {
 
                 $q->whereIn(
                     'building_id',
@@ -251,7 +251,7 @@ class DashboardController extends Controller
                 'buildings' => $buildingQuery->count(),
 
                 // Revenue
-                'revenue' => $revenue->sum('room_rent'),
+                'revenue' => $revenue->sum('grand_total'),
 
                 // Total Rooms
                 'rooms' => (clone $roomQuery)->count(),

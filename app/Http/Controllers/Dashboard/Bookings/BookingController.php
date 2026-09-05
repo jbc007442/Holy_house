@@ -1037,28 +1037,36 @@ class BookingController extends Controller
             ]);
 
             /*
-        |--------------------------------------------------------------------------
-        | Stay Days
-        |--------------------------------------------------------------------------
-        |
-        | Calculate exact duration and always round UP.
-        |
-        | Example:
-        | 9.0000001 days = 10 days
-        | 9.1154629 days = 10 days
-        |
-        */
+       /*
+|--------------------------------------------------------------------------
+| Stay Days
+|--------------------------------------------------------------------------
+|
+| First 24 hours = 1 day.
+| After the first 24 hours, only complete 24-hour periods are counted.
+|
+*/
 
             $checkIn = Carbon::parse($booking->check_in);
 
             $checkOut = Carbon::parse($booking->check_out);
 
-            $stayDays = max(
-                1,
-                (int) ceil(
-                    $checkIn->diffInSeconds($checkOut) / 86400
-                )
-            );
+            $durationInSeconds = $checkIn->diffInSeconds($checkOut);
+
+            if ($durationInSeconds <= 86400) {
+
+                // First day
+                $stayDays = 1;
+            } else {
+
+                // First 24 hours = 1 day
+                // Remaining time = floor
+                $remainingSeconds = $durationInSeconds - 86400;
+
+                $stayDays = 1 + (int) floor(
+                    $remainingSeconds / 86400
+                );
+            }
 
             /*
         |--------------------------------------------------------------------------
